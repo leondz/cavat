@@ -161,10 +161,8 @@ conn = MySQLdb.connect (host = "localhost", user = "timebank", passwd = "timeban
 conn.select_db(dbName)
 cursor = conn.cursor()
 
+numericFields = ['events.doc_id',  'events.position',  'events.sentence',  'instances.doc_id', 'signals.doc_id',  'signals.position',  'signals.sentence',  'timex3s.doc_id',  'timex3s.position',  'timex3s.sentence',  'tlinks.doc_id']
 
-#dump("show distribution of signalid state in tlink")
-#dump("show list of event text where event pos is other")
-#dump("show distribution of signal text where tlink reltype is before")
 
 
 print "# CAVaT Corpus Analysis and Validation for TimeML"
@@ -275,8 +273,13 @@ while True:
             # build a distribution report. here we will show unique values for a field, as well as their frequency in the selected corpus, showing most frequent first.
             # would be great to add a percentage column
             sqlGroup = ' GROUP BY ' + sqlFieldName
-            sqlField = sqlFieldName + ', COUNT(' + sqlFieldName + ') AS count ' 
-            sqlOrder = ' ORDER BY count DESC'
+            sqlField = sqlFieldName + ', COUNT(' + sqlFieldName + ') AS count '
+
+            # if we are generating a report about a numeric value, sort the table by that value, not by frequency; this was round, it's easier to spot lumps / import into a histogram
+            if (sqlTable + '.' + sqlFieldName).lower() in numericFields:
+                sqlOrder = ' ORDER BY ' + sqlFieldName + ' ASC'
+            else:
+                sqlOrder = ' ORDER BY count DESC'
             
         # state is either "filled" or "unfilled", showing whether or not the attributed has been specified
         elif t.report == 'state':
