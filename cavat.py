@@ -9,6 +9,13 @@ import MySQLdb
 import atexit
 from cavatGrammar import cavatStmt,  validTags
 
+def buildSqlWhereClause(wheres):
+    if len(sqlWheres) > 0:
+        return ' WHERE ' + ' AND '.join(wheres)
+    else:
+        return ''
+    
+    
 def latexSafe(data):
     data = data.replace('%',  '\\%')
     data = data.replace('_',  '\\_')
@@ -24,7 +31,10 @@ def errorMsg(message,  LF = False):
 
 
 def runQuery(sqlQuery,  failureMessage = 'Query failed.'):
-    global cursor
+    global cursor,  debug
+
+    if debug:
+        print sqlQuery
 
     try:
         cursor.execute(sqlQuery)
@@ -208,83 +218,103 @@ while True:
         sqlTable = ''
         sqlOrder = ''
         sqlDistinct = ''
-        
-        results = []
+
         sqlQuery = ''
+        results = []
+        
+        whereCaption = ''
         
         
         format = 'screen'
         if t.format:
             format = t.format.lower()
 
-
         # unconditional? i.e., is there no where clause? if not, we're processing one of the more simple queries.
-        if not t.condition:
+        
+        # make sure that the request output field exists
+        if t.result.tag in (validTags):
+            sqlTable = t.result.tag.lower() + 's'
+            sqlFieldName = t.result.property
             
-            # make sure that the request output field exists
-            if t.result.tag in (validTags):
-                sqlTable = t.result.tag.lower() + 's'
-                sqlFieldName = t.result.property
+        else:
+            errorMsg("tag '" + t.result.tag + "' unsupported, expected one of " + validTags)
+            continue
+        
+        sqlField = sqlFieldName
+        
+        if t.condition:
+            
+            if not t.state:
+            
+                if not t.not_:
+                    sqlWheres.append(t.condition.conditionField +' = "' + t.condition.conditionValue+'"')
+                    whereCaption = ' when ' + t.condition.conditionField.capitalize() + ' is "' + t.condition.conditionValue + '"'
+                    
+                else:
+                    sqlWheres.append(t.condition.conditionField +' <> "' + t.condition.conditionValue+'"')
+                    whereCaption = ' when ' + t.condition.conditionField.capitalize() + ' differs from "' + t.condition.conditionValue + '"'
                 
             else:
-                errorMsg("tag '" + t.result.tag + "' unsupported, expected one of " + validTags)
-                continue
+                
+                if (not t.not_ and t.state.lower() == 'filled') or (t.not_ and t.state.lower() == 'unfilled'):
+                    sqlWheres.append(t.condition.conditionField +' IS NOT NULL')
+                    whereCaption = ' when ' + t.condition.conditionField.capitalize() + ' is defined'
+                    
+                else:
+                    sqlWheres.append(t.condition.conditionField +' IS NULL')
+                    whereCaption = ' when ' + t.condition.conditionField.capitalize() + ' is not defined'
+
+        # process report type
+        # a list report just shows the values as they are, without any accompanying data
+        if t.report == 'list':
+            pass
             
-            sqlField = sqlFieldName
+        elif t.report == 'distribution':
+            # build a distribution report. here we will show unique values for a field, as well as their frequency in the selected corpus, showing most frequent first.
+            # would be great to add a percentage column
+            sqlGroup = ' GROUP BY ' + sqlFieldName
+            sqlField = sqlFieldName + ', COUNT(' + sqlFieldName + ') AS count ' 
+            sqlOrder = ' ORDER BY count DESC'
+            
+        # state is either "filled" or "unfilled", showing whether or not the attributed has been specified
+        elif t.report == 'state':
+            
+            # for state reports:
+            # - count all instances of tag in question
+            # - find out how many of that tag have NULL for the field in question
+            # - calculate (a) how many don't; (b) percentages of each group
+            # - place into an array, pass to outputResults
+            # - continue
 
-            # process report type
-            # a list report just shows the values as they are, without any accompanying data
-            if t.report == 'list':
-                pass
-                
-            elif t.report == 'distribution':
-                # build a distribution report. here we will show unique values for a field, as well as their frequency in the selected corpus, showing most frequent first.
-                # would be great to add a percentage column
-                sqlGroup = ' GROUP BY ' + sqlFieldName
-                sqlField = sqlFieldName + ', COUNT(' + sqlFieldName + ') AS count ' 
-                sqlOrder = ' ORDER BY count DESC'
-                
-            # state is either "filled" or "unfilled", showing whether or not the attributed has been specified
-            elif t.report == 'state':
-                
-                # for state reports:
-                # - count all instances of tag in question
-                # - find out how many of that tag have NULL for the field in question
-                # - calculate (a) how many don't; (b) percentages of each group
-                # - place into an array, pass to outputResults
-                # - continue
-
-                if not runQuery("SELECT COUNT(*) FROM " + sqlTable):
-                    continue
-                totalTags = cursor.fetchone()[0]
-
-                if not runQuery('SELECT COUNT(*) FROM '+sqlTable+' WHERE '+sqlFieldName+' IS NOT NULL AND '+sqlFieldName+' <> ""'):
-                    continue
-                filledTags = cursor.fetchone()[0]
-                
-                unfilledTags = totalTags - filledTags
-                
-                filledPct = "%0.1f" % (float(filledTags) * 100 / totalTags)
-                unfilledPct = "%0.1f" % (float(unfilledTags) * 100 / totalTags)
-                
-                results.append(['State of ' + t.result.tag.capitalize() + ' ' + sqlFieldName,  'Count'])
-                results.append([sqlFieldName + ' filled',  '(' + filledPct + '%)',  filledTags])
-                results.append([sqlFieldName + ' unfilled',  '(' + unfilledPct + '%)',  unfilledTags])
-                
-                outputResults(results,  t.report,  format)
-                
+            if not runQuery("SELECT COUNT(*) FROM " + sqlTable + buildSqlWhereClause(sqlWheres)):
                 continue
+            totalTags = cursor.fetchone()[0]
+            
+            sqlWheres.append(sqlFieldName + ' IS NOT NULL')
 
-            else:
-                errorMsg(t.report + " unsupported, expected 'list', 'distribution' or 'state'")
+            if not runQuery('SELECT COUNT(*) FROM ' + sqlTable + buildSqlWhereClause(sqlWheres)):
+                continue
+            filledTags = cursor.fetchone()[0]
+            
+            unfilledTags = totalTags - filledTags
+            
+            filledPct = "%0.1f" % (float(filledTags) * 100 / totalTags)
+            unfilledPct = "%0.1f" % (float(unfilledTags) * 100 / totalTags)
+            
+            results.append(['State of ' + t.result.tag.capitalize() + ' ' + sqlFieldName + whereCaption,  'Count'])
+            results.append([sqlFieldName + ' filled',  '(' + filledPct + '%)',  filledTags])
+            results.append([sqlFieldName + ' unfilled',  '(' + unfilledPct + '%)',  unfilledTags])
+            
+            outputResults(results,  t.report,  format)
+            
+            continue
+
+        else:
+            errorMsg(t.report + " unsupported, expected 'list', 'distribution' or 'state'")
     
         
         # build the WHERE clause from a list of conditions stored in sqlWheres
-        if len(sqlWheres) > 0:
-            sqlWhere = ' WHERE ' + ' AND '.join(sqlWheres)
-        else:
-            sqlWhere = ''
-        
+        sqlWhere = buildSqlWhereClause(sqlWheres)
         
         if len(results) == 0:
         
@@ -297,9 +327,9 @@ while True:
             results = list(cursor.fetchall())
             
             if t.report == 'distribution':
-                results.insert(0,  [t.result.tag.capitalize() + ' ' + sqlFieldName,  'Frequency'])
+                results.insert(0,  [t.result.tag.capitalize() + ' ' + sqlFieldName + whereCaption,  'Frequency'])
             elif t.report == 'list':
-                results.insert(0,  [t.result.tag.capitalize() + ' ' + sqlFieldName])
+                results.insert(0,  [t.result.tag.capitalize() + ' ' + sqlFieldName + whereCaption])
         
         # detach result-printing from result-gathering, so that we can print results regardless of where the data come from (e.g. sqlQuery, manual calculations)
         # output results as a list - switch this depending on output request (tsv, csv, latex would be handy - latex with headers bold, first column left aligned all others right)

@@ -1,4 +1,4 @@
-from pyparsing import Forward, Keyword, Word, oneOf, alphas, alphanums,  quotedString,  Group,  Optional,  ParseException,  OneOrMore
+from pyparsing import Forward, Keyword, Word, oneOf, alphas, alphanums,  nums,  printables,  QuotedString,  Group,  Optional,  ParseException,  OneOrMore,  LineEnd,  Suppress,  QuotedString
 
 
 # TimeML tags
@@ -26,17 +26,26 @@ alphaNums_ = Word(alphanums + "_")
 fileName = Word(alphanums + "_-.+%/")
 reportType = oneOf("list distribution state",  caseless = True)
 outputFormat = oneOf("screen csv tsv tex",  caseless = True)
+conditionValue = Group(Word(nums) | QuotedString('"\''))
+state = oneOf("filled unfilled",  caseless = True)
+
+# markers
+EOL = Suppress(LineEnd())
 
 # joining particles
 as_ = Keyword("as",  caseless = True)
+filled_ = Keyword("filled",  caseless = True)
 from_ = Keyword("from",  caseless = True)
 import_ = Keyword("import",  caseless = True)
 in_ = Keyword("in",  caseless = True)
 info_ = Keyword("info",  caseless = True)
 is_ = Keyword("is",  caseless = True)
 list_ = Keyword("list",  caseless = True)
+not_ = Keyword("not",  caseless = True)
 of_ = Keyword("of",  caseless = True)
+state_ = Keyword("state",  caseless = True)
 to_ = Keyword("to",  caseless = True)
+unfilled_ = Keyword("unfilled",  caseless = True)
 use_ = Keyword("use",  caseless = True)
 verify_ = Keyword("verify",  caseless = True)
 where_ = Keyword("where",  caseless = True)
@@ -48,31 +57,34 @@ signalProperty = Keyword("signal",  caseless = True).setResultsName("tag") + one
 timex3Property = Keyword("timex3",  caseless = True).setResultsName("tag") + oneOf(timex3Fields,  caseless = True).setResultsName("property")
 tlinkProperty = Keyword("tlink",  caseless = True).setResultsName("tag") + oneOf(tlinkFields,  caseless = True).setResultsName("property")
 
+
+
 # field name property, build from field specifiers
 fieldName = Group(eventProperty | instanceProperty | signalProperty | timex3Property | tlinkProperty)
 
-
-whereClause = Group(where_ + fieldName.setResultsName("conditionField") + is_ + alphaNums_.setResultsName("conditionValue")).setResultsName("condition")
+simpleWhereClause = (
+            where_  
+            + oneOf(' '.join([eventFields,  instanceFields,  signalFields,  timex3Fields,  tlinkFields])).setResultsName("conditionField")
+            + (
+                is_ + Optional(not_.setResultsName("not_")) + alphaNums_.setResultsName("conditionValue")
+                |
+                state_ + is_ + Optional(not_.setResultsName("not_")) + state.setResultsName("state")
+                )
+        )
 
 
 cavatStmt << (
               
-                helpToken.setResultsName("action") + Optional(OneOrMore(alphaNums_))
+                helpToken.setResultsName("action") + Optional(OneOrMore(alphaNums_).setResultsName("query"))
                 
                 |
               
-                showToken.setResultsName("action") + reportType.setResultsName("report") + of_ +
-               
-                
-                    (
-                    fieldName.setResultsName("result")
-                    |
-                    fieldName.setResultsName("result") + Optional(whereClause)
-                    |
-                    info_
-                    )
+                showToken.setResultsName("action") + reportType.setResultsName("report") + of_ + fieldName.setResultsName("result") 
                     
+                    + Optional(simpleWhereClause.setResultsName("condition"))
+
                     + Optional(as_ + outputFormat.setResultsName("format"))
+
                 |
                 
                 corpusToken.setResultsName("action")  +
@@ -106,6 +118,6 @@ cavatStmt << (
                 |
                 
                 debugToken.setResultsName("action") + Optional(onOff.setResultsName("state"))
-               )
+                ) + EOL
 
 
