@@ -168,7 +168,7 @@ cursor = conn.cursor()
 
 
 print "# CAVaT Corpus Analysis and Validation for TimeML"
-print "# Support: leon@dcs.shef.ac.uk"
+print "# Support:  leon@dcs.shef.ac.uk"
 
 debug = False
 
@@ -188,17 +188,19 @@ while True:
         break
     
     if not input:
+        errorMsg('Enter "help" to explore the command hierarchy.')
         continue
 
     if input.lower() in ("x",  "q",  "exit",  "quit"):
         print "Thanks for using CAVaT."
         break
-    
+
+
+
     try:
         t = cavatStmt.parseString(input)
     except ParseException,  pe:
         errorMsg('Syntax error: ' + str(pe))
-        errorMsg('Enter "help" to explore the command hierarchy.')
         continue
 
     if debug:
