@@ -8,6 +8,10 @@ import string
 import MySQLdb
 import atexit
 from cavatGrammar import cavatStmt,  validTags
+from cavatMessages import *
+from cavatDebug import debug
+import db
+from db import runQuery
 
 def buildSqlWhereClause(wheres):
     if len(sqlWheres) > 0:
@@ -16,137 +20,16 @@ def buildSqlWhereClause(wheres):
         return ''
     
     
-def latexSafe(data):
-    data = data.replace('%',  '\\%')
-    data = data.replace('_',  '\\_')
-    return data
-    
-def errorMsg(message,  LF = False):
-    
-        # should we do a linefeed before the error message (e.g. if Ctrl-C has been pressed)?
-        if LF:
-            print
-        
-        sys.stderr.write('! ' + message + "\n")
-
-
-def runQuery(sqlQuery,  failureMessage = 'Query failed.'):
-    global cursor,  debug
-
-    if debug:
-        print sqlQuery
-
-    try:
-        cursor.execute(sqlQuery)
-        
-    except Exception,  e:
-        errorMsg(failureMessage)
-        errorMsg("SQL was: \t" + sqlQuery)
-        errorMsg("SQL error: \t"+ str(e))
-        return False
-
-    return True
-    
-
-def outputResults(results,  reportType,  format = 'screen'):
-
-    screenSeparator = '  '
-    rightPad = 11
-
-    global debug
-    if debug:
-        print "results: ",  results
-        print "report type: ",  reportType
-        print "format: ",  format
 
     
     
-    if format == 'csv':
-        
-        # dump out a CSV
-        for row in results:
-            
-            # convert all entities to string
-            row = map(str, row)
-            print '"' + '","'.join(row) + '"'
-        
-    elif format == 'tex':
-        header = results.pop(0)
-        
-        
-        columns = len(header)
-        
-        # latex-escape any percentage symbols (otherwise they act as comments)
-        header = map(str,  header)
-        header = map(latexSafe,  header)
-        
-        caption = reportType.capitalize() + ' of ' + header[0]
-        label = 'tab:' + '-'.join(header).replace(' ',  '') + '-' + reportType
-        
-        print "\\begin{table}"
-        print "\\caption{" + caption + "}"
-        print "\\label{" + label + "}"
-        print "\\begin{tabular}{ | l " + ('| r ') * columns + "| }"
-        
-        print "\\hline"
-        print '\\textbf{' + '} & \\textbf{'.join(header) + '} \\\\'
-        print "\\hline"
-        
-        for row in results:
-            
-            row = map(str,  row)
-            row = map(latexSafe,  row)
-            
-            print ' & '.join(row) + ' \\\\'
-        
-        print "\\hline"
-        print "\\end{tabular}"
-        print "\\end{table}"
-        
-        
-    else:
-        
-        # first row is always headers
-        # screen printing mode
-        header = results.pop(0)
-        headline = ''
-        
-        if reportType == 'list':
-            headline = header[0]
-            
-        elif reportType == 'state' or reportType == 'distribution': # switch column order for screen, to keep numbers displayed close to their label
-            [header[0],  header[1]] = [header[1],  header[0]]
-            headline = str(header[0]).rjust(rightPad,  ' ') + screenSeparator + screenSeparator.join(header[1:])
-        
-        print headline
-        print ' ' + '=' * (len(headline) + (rightPad - 2))
-
-        for row in results:
-            
-            row = map(str,  row)
-            
-            if reportType == 'list':
-                print row[0]
-                
-            elif reportType == 'distribution':
-                # convert row to list (originally tuple from mysql result), and then re-order to give count / label
-                row = list(row)
-                [row[0],  row[1]] = [row[1],  row[0]]
-                print str(row[0]).rjust(rightPad,  ' ') + screenSeparator + row[1]
-                
-            elif reportType == 'state':
-                # re-order columns, so that we have count / state / percentage
-                [row[0],  row[1],  row[2]] = [row[2],  row[0],  row[1]]
-                print str(row[0]).rjust(rightPad,   ' ') + screenSeparator + row[1] + screenSeparator + row[2]
-                
-            else:
-                print "\t".join(row)
-    
-    
 
 
 
+
+# readline code for persistent command history
 histfile = os.path.join(os.environ["HOME"], ".cavat_history")
+
 try:
     readline.read_history_file(histfile)
 except IOError:
@@ -154,12 +37,14 @@ except IOError:
 
 atexit.register(readline.write_history_file, histfile)
 
+cavatVersion = 0.1
+
 dbName = 'timebank'
 dbPrefix = 'timebank'
 
-conn = MySQLdb.connect (host = "localhost", user = "timebank", passwd = "timebank")
-conn.select_db(dbName)
-cursor = conn.cursor()
+db.connect('localhost',  'timebank',  'timebank')
+db.changeDb(dbName)
+cursor = db.cursor
 
 numericFields = ['events.doc_id',  'events.position',  'events.sentence',  'instances.doc_id', 'signals.doc_id',  'signals.position',  'signals.sentence',  'timex3s.doc_id',  'timex3s.position',  'timex3s.sentence',  'tlinks.doc_id']
 
@@ -167,8 +52,6 @@ numericFields = ['events.doc_id',  'events.position',  'events.sentence',  'inst
 
 print "# CAVaT Corpus Analysis and Validation for TimeML"
 print "# Support:  leon@dcs.shef.ac.uk"
-
-debug = False
 
 while True:
     
@@ -275,7 +158,7 @@ while True:
             sqlGroup = ' GROUP BY ' + sqlFieldName
             sqlField = sqlFieldName + ', COUNT(' + sqlFieldName + ') AS count '
 
-            # if we are generating a report about a numeric value, sort the table by that value, not by frequency; this was round, it's easier to spot lumps / import into a histogram
+            # if we are generating a report about a numeric value, sort the table by that value, not by frequency; this way round, it's easier to spot lumps / import into a histogram
             if (sqlTable + '.' + sqlFieldName).lower() in numericFields:
                 sqlOrder = ' ORDER BY ' + sqlFieldName + ' ASC'
             else:
@@ -353,13 +236,12 @@ while True:
                 dbName = dbPrefix
             
             try:
-                conn.select_db(dbName)
+                db.changeDb(dbName)
             except Exception,  e:
                 errorMsg("Corpus database change failed "+str(e))
                 continue
             
             print "# Corpus database changed to " + t.database
-            cursor = conn.cursor()
             
         elif t.info:
             # show corpus info - select * from info, print
@@ -458,6 +340,82 @@ while True:
 
     elif t.action == 'help':
         errorMsg('Not implemented, sorry')
+        
+    elif t.action == 'check':
+        moduleName = t.module.lower()
+        
+        # check for module presence
+        modulePath = 'modules/' + moduleName + '.py'
+        if not os.path.exists(modulePath):
+            errorMsg('No module of that name is installed - looking for ' + modulePath)
+            continue
+        
+        # try to import module
+        if debug:
+            print 'Loading ' + modulePath
+        
+        try:
+            exec('from modules.' + moduleName + ' import ' + moduleName)
+            
+        except Exception,  e:
+            errorMsg(str(e) + '. Path is ' + str(sys.path))
+            continue
+        
+        # instantiate and check module compatibility
+        try:
+            exec('checker = ' + moduleName + '()')
+        except Exception,  e:
+            errorMsg(str(e))
+            continue
+        
+        compatible = checker.getCompatibility(cavatVersion)
+        
+        if compatible == None:
+            errorMsg('Warning: module may not be compatible')
+        elif compatible:
+            pass
+        else:
+            errorMsg('Module is not compatible with this version of CAVaT; check skipped')
+            continue
+        
+        # build a list containing id(s) of documents to be processed
+        sourceList = t.target
+        docList = []
+        
+        if sourceList[0].lower() == 'all':
+            
+            if not runQuery('SELECT id FROM documents'):
+                continue
+            
+            results = cursor.fetchall()
+            
+            for row in results:
+                docList.append(str(row[0]))
+            
+        elif not sourceList[0].isdigit():
+            # it's not a document id; try to look up all strings in docList against documents.docname
+            
+            for source in sourceList:
+                if not runQuery('SELECT id FROM documents WHERE docname = "' + source + '"'):
+                    continue
+                
+                docList.append(str(row[0]))
+            
+        elif sourceList[0].isdigit():
+            pass
+            
+        else:
+            errorMsg('Unsure how to interpret document list')
+            
+        
+        
+        
+        # for each doc in list, call the module
+        if debug:
+            print 'Running check on doc_ids: ' + str(docList)
+
+        for doc in docList:
+            checker.checkDocument(doc)
     
     
     else:

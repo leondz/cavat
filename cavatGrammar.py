@@ -18,6 +18,7 @@ showToken = Keyword("show",  caseless = True)
 debugToken = Keyword("debug",  caseless = True)
 corpusToken = Keyword("corpus",  caseless = True)
 helpToken = Keyword("help",  caseless = True)
+checkToken = Keyword("check",  caseless = True)
 
 # parameter values
 onOff = oneOf('on off',  caseless = True)
@@ -33,6 +34,7 @@ state = oneOf("filled unfilled",  caseless = True)
 EOL = Suppress(LineEnd())
 
 # joining particles
+all_ = Keyword("all",  caseless = True)
 as_ = Keyword("as",  caseless = True)
 filled_ = Keyword("filled",  caseless = True)
 from_ = Keyword("from",  caseless = True)
@@ -118,6 +120,16 @@ cavatStmt << (
                 |
                 
                 debugToken.setResultsName("action") + Optional(onOff.setResultsName("state"))
+                
+                |
+                
+                checkToken.setResultsName("action") + alphaNums_.setResultsName("module") + in_ + 
+                    (
+                    OneOrMore(fileName).setResultsName("target")
+                    |
+                    all_.setResultsName("target")
+                    )
+                
                 ) + EOL
 
 
