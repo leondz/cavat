@@ -18,7 +18,7 @@ class tlink_loop(CavatModule):
         if not runQuery('SELECT docname FROM documents WHERE id = ' + doc_id):
             return
         
-        results = db.cursor.fetchall()
+        results = db.cursor.fetchone()
         
         docName = str(results[0])
         

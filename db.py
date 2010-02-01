@@ -1,6 +1,5 @@
 from cavatMessages import errorMsg
 import MySQLdb
-from singleton import Singleton
 from cavatDebug import debug
 import sys
 
