@@ -1,4 +1,4 @@
-# parent module for CAVaT
+# parent class for CAVaT
 
 class CavatModule:
     
@@ -12,7 +12,7 @@ class CavatModule:
 
 
     def __init__(self):
-        print '# ' + self.moduleName + ' v.' + self.moduleVersion + ' loaded'    
+        print '# ' + self.moduleName + ' v.' + str(self.moduleVersion) + ' loaded'    
     
     
     def getCompatibility(self,  cavatVersion):

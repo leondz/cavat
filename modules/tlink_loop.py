@@ -14,6 +14,8 @@ class tlink_loop(CavatModule):
     _maxVersion = 0.999
     
     def checkDocument(self,  doc_id):
+        
+        global debug
 
         if not runQuery('SELECT docname FROM documents WHERE id = ' + doc_id):
             return
@@ -22,6 +24,21 @@ class tlink_loop(CavatModule):
         
         docName = str(results[0])
         
+        if debug:
+            print "# Checking " + docName + ' (id ' + doc_id + ')'
         
-        # fetch and print doc name
-        print 'Dummy check for document ' + docName
+        # look at where we're linking an event instance to itself
+        if not runQuery('SELECT lid,relType, arg1 FROM tlinks WHERE arg1 = arg2 AND doc_id = ' + doc_id + ' ORDER BY CAST(SUBSTRING(lid,2) AS SIGNED)'):
+            return
+        
+        results = db.cursor.fetchall()
+        
+        if results:
+            
+            print "# Checking " + docName + ' (id ' + doc_id + ')'
+            
+            for row in results: 
+                print 'TLINK ID %s matches, type %s, event %s' % (row[0],  row[1],  row[2])
+        else:
+            if debug:
+                print 'No looping TLINKs found in this document.'

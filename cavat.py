@@ -400,6 +400,11 @@ while True:
                     continue
                 
                 results = cursor.fetchone()
+                
+                if not results:
+                    errorMsg('Document "' + source + '" not in corpus')
+                    continue
+                
                 docList.append(str(results[0]))
             
         elif sourceList[0].isdigit():
