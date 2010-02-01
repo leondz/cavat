@@ -399,7 +399,8 @@ while True:
                 if not runQuery('SELECT id FROM documents WHERE docname = "' + source + '"'):
                     continue
                 
-                docList.append(str(row[0]))
+                results = cursor.fetchone()
+                docList.append(str(results[0]))
             
         elif sourceList[0].isdigit():
             pass
