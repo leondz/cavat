@@ -253,7 +253,9 @@ class ImportTimeML:
                         pos = 'OTHER'
 
                     lemmatext = string.lower(string.strip(str(self.tagText[tag]))).translate(tTable,  string.punctuation)
-                    lemma = l.lemmatize(lemmatext,  timebankToWordnet[pos])
+                    with warnings.catch_warnings():
+                        warnings.simplefilter('ignore')
+                        lemma = l.lemmatize(lemmatext,  timebankToWordnet[pos])
                     self.cursor.execute('UPDATE events SET lemma = "%s" WHERE eid = "%s" AND doc_id = %d' % (MySQLdb.escape_string(lemma), tag,  self.doc_id))
                     
                 elif tag[0] == 't':
