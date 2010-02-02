@@ -19,11 +19,6 @@ def buildSqlWhereClause(wheres):
     else:
         return ''
     
-    
-
-    
-    
-
 
 
 
@@ -270,9 +265,15 @@ while True:
             if not debug:
                 # don't care about seeing each file processed
                 sys.stdout = open('/dev/null',  'w')
-                
+            
+            if t.database == dbPrefix:
+                targetDb = dbPrefix
+            else:
+                targetDb = dbPrefix + '_' + t.database
+            
+            
             try:
-                i.importCorpusToDb(t.directory,  dbPrefix + '_' + t.database)
+                i.importCorpusToDb(t.directory,  targetDb)
             except Exception,  e:
                 errorMsg(str(e))
                 
