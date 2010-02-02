@@ -5,7 +5,10 @@ from pyparsing import ParseException
 import os
 import sys
 import string
-import MySQLdb
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    import MySQLdb
 import atexit
 from cavatGrammar import cavatStmt,  validTags
 from cavatMessages import *
@@ -43,26 +46,39 @@ cursor = db.cursor
 
 numericFields = ['events.doc_id',  'events.position',  'events.sentence',  'instances.doc_id', 'signals.doc_id',  'signals.position',  'signals.sentence',  'timex3s.doc_id',  'timex3s.position',  'timex3s.sentence',  'tlinks.doc_id']
 
+finishedProcessing = False
 
+inputLine = None # holds a command that's passed as an argument to CAVaT
 
-print "# CAVaT Corpus Analysis and Validation for TimeML"
-print "# Support:  leon@dcs.shef.ac.uk"
+if len(sys.argv) > 1 and sys.argv[1] == '-c':
+    inputLine = ' '.join(sys.argv[2:])
 
-while True:
+else:
+    print "# CAVaT Corpus Analysis and Validation for TimeML"
+    print "# Support:  leon@dcs.shef.ac.uk"
+
+while not finishedProcessing:
     
-    input = None
     
-    try:
-        input = raw_input('cavat> ')
+    if not inputLine:
+    
+        try:
+            input = None
+            input = raw_input('cavat> ')
+            
+        except KeyboardInterrupt:
+            errorMsg('Cancelled',  True)
+            break
+            
+        except EOFError:
+            errorMsg('EOF')
+            break
         
-    except KeyboardInterrupt:
-        errorMsg('Cancelled',  True)
-        break
-        
-    except EOFError:
-        errorMsg('EOF')
-        break
+    else:
+        input = inputLine
+        finishedProcessing = True
     
+
     if not input:
         errorMsg('Enter "help" to explore the command hierarchy.')
         continue
