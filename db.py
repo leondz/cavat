@@ -1,12 +1,11 @@
 from cavatMessages import errorMsg
 import MySQLdb
-from cavatDebug import debug
+import cavatDebug
 import sys
 
 
 conn = None
 cursor = None
-
 
 def connect(host,  user,  passwd):
     
@@ -35,9 +34,7 @@ def changeDb(dbName):
 
 def runQuery(sqlQuery,  failureMessage = 'Query failed.'):
     
-    global debug
-
-    if debug:
+    if cavatDebug.debug:
         print sqlQuery
 
     try:

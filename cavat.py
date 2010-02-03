@@ -14,7 +14,7 @@ import ConfigParser
 
 from cavatGrammar import cavatStmt,  validTags
 from cavatMessages import *
-from cavatDebug import debug
+import cavatDebug
 import db
 from db import runQuery
 
@@ -109,14 +109,14 @@ while not finishedProcessing:
         break
 
 
-
     try:
         t = cavatStmt.parseString(input)
     except ParseException,  pe:
         errorMsg('Syntax error: ' + str(pe))
         continue
 
-    if debug:
+
+    if cavatDebug.debug:
         print t.dump()
     
     if t.action == 'show':
@@ -299,7 +299,7 @@ while not finishedProcessing:
             i = importTimeML.ImportTimeML()
             
             
-            if not debug:
+            if not cavatDebug.debug:
                 # don't care about seeing each file processed
                 sys.stdout = open('/dev/null',  'w')
             
@@ -314,13 +314,13 @@ while not finishedProcessing:
             except Exception,  e:
                 errorMsg(str(e))
                 
-                if not debug:
+                if not cavatDebug.debug:
                     # restore stdout
                     sys.stdout = sys.__stdout__
 
                 continue
 
-            if not debug:
+            if not cavatDebug.debug:
                 # restore stdout
                     sys.stdout = sys.__stdout__
             
@@ -359,13 +359,14 @@ while not finishedProcessing:
     
     elif t.action == 'debug':
         
+        
         if t.state == "on":
-            debug = True
+            cavatDebug.debug = True
         else:
-            debug = False
+            cavatDebug.debug = False
 
 
-        if debug:
+        if cavatDebug.debug:
             print "# Debugging is enabled."
         else:
             print "# Debugging is disabled."
@@ -389,7 +390,7 @@ while not finishedProcessing:
             continue
         
         # try to import module
-        if debug:
+        if cavatDebug.debug:
             print 'Loading ' + modulePath
         
         try:
@@ -455,7 +456,7 @@ while not finishedProcessing:
         
         
         # for each doc in list, call the module
-        if debug:
+        if cavatDebug.debug:
             print 'Running check on doc_ids: ' + str(docList)
 
         for doc in docList:
