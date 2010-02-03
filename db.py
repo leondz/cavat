@@ -26,8 +26,13 @@ def connect(host,  user,  passwd):
 def changeDb(dbName):
     
     global conn,  cursor
-
-    conn.select_db(dbName)
+    
+    try:
+        conn.select_db(dbName)
+    except:
+        errorMsg('Could not switch to database '+dbName)
+        return
+    
     cursor = conn.cursor()
     return
 

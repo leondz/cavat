@@ -25,6 +25,21 @@ def buildSqlWhereClause(wheres):
         return ''
     
 
+cavatVersion = 0.1
+
+
+# process command-line arguments
+inputLine = None # holds a command that's passed as an argument to CAVaT
+
+if len(sys.argv) > 1 and sys.argv[1] == '-c':
+    inputLine = ' '.join(sys.argv[2:])
+
+else:
+    print "# CAVaT Corpus Analysis and Validation for TimeML"
+    print "# Support:  leon@dcs.shef.ac.uk"
+
+
+
 # load ini file
 config = ConfigParser.ConfigParser()
 try:
@@ -36,8 +51,9 @@ except Exception,  e:
 try:
     dbPrefix = config.get('cavat',  'dbprefix')
     dbUser = config.get('cavat',  'dbuser')
+    dbHost = config.get('cavat',  'dbhost')
 except Exception,  e:
-    print '! Failure reading ini file: '+str(e)
+    print '! Failure reading ini file: ' + str(e)
     sys.exit()
 
 # if no pass or a blank pass is set in the database, prompt for a mysql password
@@ -49,6 +65,18 @@ except Exception,  e:
     from getpass import getpass
     dbPass = getpass('Enter MySQL password for user "' + dbUser + '": ').strip()
 
+dbName = None
+try:
+    dbName = config.get('cavat',  'dbname')
+except:
+    pass
+
+
+db.connect(dbHost,  dbUser,  dbPass)
+if dbName:
+    db.changeDb(dbName)
+
+# use default history file if nothing else is specified
 try:
     historyFile = config.get('cavat',  'historyfile')
 except Exception,  e:
@@ -65,32 +93,20 @@ except IOError:
 
 atexit.register(readline.write_history_file, histfile)
 
-cavatVersion = 0.1
 
-dbPrefix = 'timebank'
-
-db.connect('localhost',  'timebank',  'timebank')
 
 numericFields = ['events.doc_id',  'events.position',  'events.sentence',  'instances.doc_id', 'signals.doc_id',  'signals.position',  'signals.sentence',  'timex3s.doc_id',  'timex3s.position',  'timex3s.sentence',  'tlinks.doc_id']
 
+
 finishedProcessing = False
-
-inputLine = None # holds a command that's passed as an argument to CAVaT
-
-if len(sys.argv) > 1 and sys.argv[1] == '-c':
-    inputLine = ' '.join(sys.argv[2:])
-
-else:
-    print "# CAVaT Corpus Analysis and Validation for TimeML"
-    print "# Support:  leon@dcs.shef.ac.uk"
 
 while not finishedProcessing:
     
-    
+    input = None
+
     if not inputLine:
     
         try:
-            input = None
             input = raw_input('cavat> ')
             
         except KeyboardInterrupt:
@@ -126,6 +142,10 @@ while not finishedProcessing:
         print t.dump()
     
     if t.action == 'show':
+        
+        if not dbName:
+            errorMsg('First, select a corpus to run reports on, with "corpus use"')
+            continue
 
         # build a select statement
         # execute select statement and build result array
