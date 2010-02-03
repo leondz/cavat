@@ -36,7 +36,6 @@ except Exception,  e:
 try:
     dbPrefix = config.get('cavat',  'dbprefix')
     dbUser = config.get('cavat',  'dbuser')
-    historyFile = config.get('cavat',  'historyfile')
 except Exception,  e:
     print '! Failure reading ini file: '+str(e)
     sys.exit()
@@ -47,10 +46,17 @@ try:
     if not dbPass:
         raise Exception
 except Exception,  e:
-    dbPass = raw_input('Enter MySQL password for user "' + dbUser + '":').trim()
+    from getpass import getpass
+    dbPass = getpass('Enter MySQL password for user "' + dbUser + '": ').strip()
+
+try:
+    historyFile = config.get('cavat',  'historyfile')
+except Exception,  e:
+    historyFile = '.cavat_history'
+
 
 # readline code for persistent command history
-histfile = os.path.join(os.environ["HOME"], ".cavat_history")
+histfile = os.path.join(os.environ["HOME"], historyFile)
 
 try:
     readline.read_history_file(histfile)
