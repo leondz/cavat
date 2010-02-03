@@ -1,7 +1,7 @@
 from cavatModule import CavatModule
 import db
 from db import runQuery
-from cavatDebug import debug
+import cavatDebug
 
 class tlink_loop(CavatModule):
     
@@ -15,8 +15,6 @@ class tlink_loop(CavatModule):
     
     def checkDocument(self,  doc_id):
         
-        global debug
-
         if not runQuery('SELECT docname FROM documents WHERE id = ' + doc_id):
             return
         
@@ -24,7 +22,7 @@ class tlink_loop(CavatModule):
         
         docName = str(results[0])
         
-        if debug:
+        if cavatDebug.debug:
             print "# Checking " + docName + ' (id ' + doc_id + ')'
         
         # look at where we're linking an event instance to itself
@@ -40,5 +38,5 @@ class tlink_loop(CavatModule):
             for row in results: 
                 print 'TLINK ID %s matches, type %s, event %s' % (row[0],  row[1],  row[2])
         else:
-            if debug:
+            if cavatDebug.debug:
                 print 'No looping TLINKs found in this document.'
