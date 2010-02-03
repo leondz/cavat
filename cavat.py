@@ -10,6 +10,8 @@ with warnings.catch_warnings():
     warnings.simplefilter('ignore')
     import MySQLdb
 import atexit
+import ConfigParser
+
 from cavatGrammar import cavatStmt,  validTags
 from cavatMessages import *
 from cavatDebug import debug
@@ -23,7 +25,29 @@ def buildSqlWhereClause(wheres):
         return ''
     
 
+# load ini file
+config = ConfigParser.ConfigParser()
+try:
+    config.read('cavat.ini')
+except Exception,  e:
+    print '! Failed to load ini file cavat.ini'
+    sys.exit()
 
+try:
+    dbPrefix = config.get('cavat',  'dbprefix')
+    dbUser = config.get('cavat',  'dbuser')
+    historyFile = config.get('cavat',  'historyfile')
+except Exception,  e:
+    print '! Failure reading ini file: '+str(e)
+    sys.exit()
+
+# if no pass or a blank pass is set in the database, prompt for a mysql password
+try:
+    dbPass = config.get('cavat',  'dbpass')
+    if not dbPass:
+        raise Exception
+except Exception,  e:
+    dbPass = raw_input('Enter MySQL password for user "' + dbUser + '":').trim()
 
 # readline code for persistent command history
 histfile = os.path.join(os.environ["HOME"], ".cavat_history")
@@ -37,12 +61,9 @@ atexit.register(readline.write_history_file, histfile)
 
 cavatVersion = 0.1
 
-dbName = 'timebank'
 dbPrefix = 'timebank'
 
 db.connect('localhost',  'timebank',  'timebank')
-db.changeDb(dbName)
-cursor = db.cursor
 
 numericFields = ['events.doc_id',  'events.position',  'events.sentence',  'instances.doc_id', 'signals.doc_id',  'signals.position',  'signals.sentence',  'timex3s.doc_id',  'timex3s.position',  'timex3s.sentence',  'tlinks.doc_id']
 
@@ -187,13 +208,13 @@ while not finishedProcessing:
 
             if not runQuery("SELECT COUNT(*) FROM " + sqlTable + buildSqlWhereClause(sqlWheres)):
                 continue
-            totalTags = cursor.fetchone()[0]
+            totalTags = db.cursor.fetchone()[0]
             
             sqlWheres.append(sqlFieldName + ' IS NOT NULL')
 
             if not runQuery('SELECT COUNT(*) FROM ' + sqlTable + buildSqlWhereClause(sqlWheres)):
                 continue
-            filledTags = cursor.fetchone()[0]
+            filledTags = db.cursor.fetchone()[0]
             
             unfilledTags = totalTags - filledTags
             
@@ -223,7 +244,7 @@ while not finishedProcessing:
             if not runQuery(sqlQuery):
                 continue
             
-            results = list(cursor.fetchall())
+            results = list(db.cursor.fetchall())
             
             if t.report == 'distribution':
                 results.insert(0,  [t.result.tag.capitalize() + ' ' + sqlFieldName + whereCaption,  'Frequency'])
@@ -260,7 +281,7 @@ while not finishedProcessing:
             if not runQuery('SELECT * FROM info ORDER BY `key` ASC',  "no info table found?"):
                 continue
             
-            results = cursor.fetchall()
+            results = db.cursor.fetchall()
             
             print "\n# Info for corpus in database '" + dbName +"' (prefix is '" + dbPrefix + "')\n"
             
@@ -317,7 +338,7 @@ while not finishedProcessing:
             if not runQuery('SHOW DATABASES LIKE "' + dbPrefix + '%"'):
                 continue
             
-            results = cursor.fetchall()
+            results = db.cursor.fetchall()
             
             for row in results:
                 listedDb = str(row[0])
@@ -404,7 +425,7 @@ while not finishedProcessing:
             if not runQuery('SELECT id FROM documents'):
                 continue
             
-            results = cursor.fetchall()
+            results = db.cursor.fetchall()
             
             for row in results:
                 docList.append(str(row[0]))
@@ -416,7 +437,7 @@ while not finishedProcessing:
                 if not runQuery('SELECT id FROM documents WHERE docname = "' + source + '"'):
                     continue
                 
-                results = cursor.fetchone()
+                results = db.cursor.fetchone()
                 
                 if not results:
                     errorMsg('Document "' + source + '" not in corpus')

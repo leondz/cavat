@@ -4,7 +4,6 @@ from cavatDebug import debug
 import sys
 
 
-
 conn = None
 cursor = None
 
@@ -36,7 +35,7 @@ def changeDb(dbName):
 
 def runQuery(sqlQuery,  failureMessage = 'Query failed.'):
     
-    global conn,  cursor
+    global debug
 
     if debug:
         print sqlQuery
