@@ -12,7 +12,7 @@ with warnings.catch_warnings():
 import atexit
 import ConfigParser
 
-from cavatGrammar import cavatStmt,  validTags
+from cavatGrammar import cavatStmt,  validTags, numericFields
 from cavatMessages import *
 import cavatDebug
 import db
@@ -93,9 +93,6 @@ except IOError:
 
 atexit.register(readline.write_history_file, histfile)
 
-
-
-numericFields = ['events.doc_id',  'events.position',  'events.sentence',  'instances.doc_id', 'signals.doc_id',  'signals.position',  'signals.sentence',  'timex3s.doc_id',  'timex3s.position',  'timex3s.sentence',  'tlinks.doc_id']
 
 
 finishedProcessing = False

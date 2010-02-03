@@ -1,8 +1,10 @@
 from pyparsing import Forward, Keyword, Word, oneOf, alphas, alphanums,  nums,  printables,  QuotedString,  Group,  Optional,  ParseException,  OneOrMore,  LineEnd,  Suppress,  QuotedString
 
 
-# TimeML tags
+
+# TimeML information
 validTags = ['event',  'tlink',  'instance',  'signal',  'timex3']
+numericFields = ['events.doc_id',  'events.position',  'events.sentence',  'instances.doc_id', 'signals.doc_id',  'signals.position',  'signals.sentence',  'timex3s.doc_id',  'timex3s.position',  'timex3s.sentence',  'tlinks.doc_id']
 
 # field names
 eventFields = "doc_id eid class text lemma position sentence eventid signalid pos tense aspect cardinality polarity modality"
@@ -11,6 +13,7 @@ signalFields = "doc_id sid text position sentence"
 timex3Fields = "doc_id tid type functionindocument beginpoint endpoint quant freq temporalfunction value mod anchortimeid text position sentence"
 tlinkFields = "doc_id lid origin signalid arg1 reltype arg2"
 
+# the top-level command
 cavatStmt = Forward()
 
 # top-level commands
