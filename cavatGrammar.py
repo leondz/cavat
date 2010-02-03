@@ -126,13 +126,17 @@ cavatStmt << (
                 
                 |
                 
-                checkToken.setResultsName("action") + alphaNums_.setResultsName("module") + in_ + 
+                checkToken.setResultsName("action") + 
                     (
-                    OneOrMore(fileName).setResultsName("target")
+                    alphaNums_.setResultsName("module") + in_ + 
+                        (
+                        OneOrMore(fileName).setResultsName("target")
+                        |
+                        all_.setResultsName("target")
+                        )
                     |
-                    all_.setResultsName("target")
+                    list_.setResultsName("list")
                     )
-                
                 ) + EOL
 
 

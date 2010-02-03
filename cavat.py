@@ -48,6 +48,13 @@ except Exception,  e:
     print '! Failed to load ini file cavat.ini'
     sys.exit()
 
+# module variables
+try:
+    moduleDir = config.get('cavat',  'moduledir')
+except:
+    moduleDir = 'modules'
+
+# db variables
 try:
     dbPrefix = config.get('cavat',  'dbprefix')
     dbUser = config.get('cavat',  'dbuser')
@@ -404,86 +411,96 @@ while not finishedProcessing:
         errorMsg('Not implemented, sorry')
         
     elif t.action == 'check':
-        moduleName = t.module.lower()
         
-        # check for module presence
-        modulePath = 'modules/' + moduleName + '.py'
-        if not os.path.exists(modulePath):
-            errorMsg('No module of that name is installed - looking for ' + modulePath)
-            continue
-        
-        # try to import module
-        if cavatDebug.debug:
-            print 'Loading ' + modulePath
-        
-        try:
-            exec('from modules.' + moduleName + ' import ' + moduleName)
+        # return a list of files in the module directory, apart from svn data, the __init__ package file, and compiled python
+        if t.list:
+            print '# Available modules:'
+            dirList = os.listdir(moduleDir + '/')
+            for module in dirList:
+                if module != '__init__.py' and module.find('.pyc') == -1 and module[0] != '.':
+                    print '# - ' +module.replace('.py',  '')
             
-        except Exception,  e:
-            errorMsg(str(e) + '. Path is ' + str(sys.path))
-            continue
-        
-        # instantiate and check module compatibility
-        try:
-            exec('checker = ' + moduleName + '()')
-        except Exception,  e:
-            errorMsg(str(e))
-            continue
-        
-        compatible = checker.getCompatibility(cavatVersion)
-        
-        if compatible == None:
-            errorMsg('Warning: module may not be compatible')
-        elif compatible:
-            pass
         else:
-            errorMsg('Module is not compatible with this version of CAVaT; check skipped')
-            continue
-        
-        # build a list containing id(s) of documents to be processed
-        sourceList = t.target
-        docList = []
-        
-        if sourceList[0].lower() == 'all':
+            moduleName = t.module.lower()
             
-            if not runQuery('SELECT id FROM documents'):
+            # check for module presence
+            modulePath = moduleDir + '/' + moduleName + '.py'
+            if not os.path.exists(modulePath):
+                errorMsg('No module of that name is installed - looking for ' + modulePath)
                 continue
             
-            results = db.cursor.fetchall()
+            # try to import module
+            if cavatDebug.debug:
+                print 'Loading ' + modulePath
             
-            for row in results:
-                docList.append(str(row[0]))
+            try:
+                exec('from modules.' + moduleName + ' import ' + moduleName)
+                
+            except Exception,  e:
+                errorMsg(str(e) + '. Path is ' + str(sys.path))
+                continue
             
-        elif not sourceList[0].isdigit():
-            # it's not a document id; try to look up all strings in docList against documents.docname
+            # instantiate and check module compatibility
+            try:
+                exec('checker = ' + moduleName + '()')
+            except Exception,  e:
+                errorMsg(str(e))
+                continue
             
-            for source in sourceList:
-                if not runQuery('SELECT id FROM documents WHERE docname = "' + source + '"'):
+            compatible = checker.getCompatibility(cavatVersion)
+            
+            if compatible == None:
+                errorMsg('Warning: module may not be compatible')
+            elif compatible:
+                pass
+            else:
+                errorMsg('Module is not compatible with this version of CAVaT; check skipped')
+                continue
+            
+            # build a list containing id(s) of documents to be processed
+            sourceList = t.target
+            docList = []
+            
+            if sourceList[0].lower() == 'all':
+                
+                if not runQuery('SELECT id FROM documents'):
                     continue
                 
-                results = db.cursor.fetchone()
+                results = db.cursor.fetchall()
                 
-                if not results:
-                    errorMsg('Document "' + source + '" not in corpus')
-                    continue
+                for row in results:
+                    docList.append(str(row[0]))
                 
-                docList.append(str(results[0]))
+            elif not sourceList[0].isdigit():
+                # it's not a document id; try to look up all strings in docList against documents.docname
+                
+                for source in sourceList:
+                    if not runQuery('SELECT id FROM documents WHERE docname = "' + source + '"'):
+                        continue
+                    
+                    results = db.cursor.fetchone()
+                    
+                    if not results:
+                        errorMsg('Document "' + source + '" not in corpus')
+                        continue
+                    
+                    docList.append(str(results[0]))
+                
+            elif sourceList[0].isdigit():
+                pass
+                
+            else:
+                errorMsg('Unsure how to interpret document list')
+                
             
-        elif sourceList[0].isdigit():
-            pass
             
-        else:
-            errorMsg('Unsure how to interpret document list')
             
-        
-        
-        
-        # for each doc in list, call the module
-        if cavatDebug.debug:
-            print 'Running check on doc_ids: ' + str(docList)
+            # for each doc in list, call the module
+            if cavatDebug.debug:
+                print 'Running check on doc_ids: ' + str(docList)
 
-        for doc in docList:
-            checker.checkDocument(doc)
+            for doc in docList:
+                checker.checkDocument(doc)
     
     
     else:
