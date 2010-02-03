@@ -36,7 +36,7 @@ if len(sys.argv) > 1 and sys.argv[1] == '-c':
 
 else:
     print "# CAVaT Corpus Analysis and Validation for TimeML"
-    print "# Support:  leon@dcs.shef.ac.uk"
+    print "# Version:  %s   Support:  leon@dcs.shef.ac.uk" % (str(cavatVersion))
 
 
 
