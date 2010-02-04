@@ -30,3 +30,9 @@ class CavatModule:
     def checkDocument(self,  doc_id):
         print 'Dummy check'
         return
+
+    def help(self):
+        # print out help regarding module usage
+        print '# No help defined for this module.'
+        return
+    

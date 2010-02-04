@@ -39,7 +39,7 @@ distanceUnits = oneOf("words sentences",  caseless = True)
 EOL = Suppress(LineEnd())
 
 # joining particles
-particles = ['all',  'arg1',  'arg2',  'as',  'distance',  'filled', 'from', 'import', 'in', 'info', 'is', 'list', 'not', 'of', 'signal', 'state', 'to', 'unfilled', 'use', 'verify', 'where']
+particles = ['all',  'arg1',  'arg2',  'as',  'distance',  'filled', 'from', 'help', 'import', 'in', 'info', 'is', 'list', 'not', 'of', 'signal', 'state', 'to', 'unfilled', 'use', 'verify', 'where']
 for particle in particles:
     exec('%s_ = Keyword("%s", caseless = True)' % (particle,  particle))
 
@@ -126,16 +126,24 @@ cavatStmt << (
                 
                 |
                 
-                checkToken.setResultsName("action") + 
+                checkToken.setResultsName("action") +
                     (
-                    alphaNums_.setResultsName("module") + in_ + 
-                        (
-                        OneOrMore(fileName).setResultsName("target")
-                        |
-                        all_.setResultsName("target")
-                        )
-                    |
                     list_.setResultsName("list")
+                    |
+
+                        (
+                        alphaNums_.setResultsName("module") + 
+                        help_.setResultsName("help")
+                        |
+                            (
+                                in_ + 
+                                (
+                                OneOrMore(fileName).setResultsName("target")
+                                |
+                                all_.setResultsName("target")
+                                )
+                            )
+                        )
                     )
                 ) + EOL
 

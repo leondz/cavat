@@ -591,6 +591,10 @@ while not finishedProcessing:
                 errorMsg('Module is not compatible with this version of CAVaT; check skipped')
                 continue
             
+            if t.help:
+                checker.help()
+                continue
+            
             # build a list containing id(s) of documents to be processed
             sourceList = t.target
             docList = []
