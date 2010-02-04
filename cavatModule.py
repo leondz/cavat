@@ -33,6 +33,6 @@ class CavatModule:
 
     def help(self):
         # print out help regarding module usage
-        print '# No help defined for this module.'
+        print '# ' + self.moduleDescription
         return
     
