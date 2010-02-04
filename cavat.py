@@ -147,6 +147,10 @@ while not finishedProcessing:
     
     if t.action == 'show':
         
+        if t.distance:
+            errorMsg('Sorry; distance queries are not implemented yet.')
+            continue
+        
         if not dbName:
             errorMsg('First, select a corpus to run reports on, with "corpus use"')
             continue

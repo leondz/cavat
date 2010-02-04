@@ -116,6 +116,7 @@ def outputResults(results,  reportType,  format = 'screen'):
                 row = list(row)
                 [row[0],  row[1]] = [row[1],  row[0]]
                 
+                # handle Total row, which has no percentage column
                 if len(row) > 2:
                     row[2] = round_figures(float(row[2]) * 100, 3)
                     print str(row[0]).rjust(rightPad,  ' ') + screenSeparator + row[1] + screenSeparator + str(row[2]) + '%'
