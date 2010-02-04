@@ -434,7 +434,115 @@ while not finishedProcessing:
 
 
     elif t.action == 'help':
-        errorMsg('Not implemented, sorry')
+        print '# ============================================================================================ CAVaT help'
+        
+        try:
+            query = t.query[0]
+        except Exception:
+            
+            print '# Top level commands:'
+            print '#   corpus - For working with corpora and databases'
+            print '#   show - Report generation'
+            print '#   check - Run a corpus validation module'
+            print '#   debug - Toggle debug mode'
+            print '# Enter "help" followed by one of these to see the command syntax'
+            continue
+        
+        if query == 'show':
+            print '# show: Run a report, and return the results'
+            print '# '            
+            print '# Basic form is  '
+            print '#   show <"distribution"|"list"|"state"> of <tag> <attribute>'
+            print '# Distribution, list and state are report types; tag is a TimeML tag, and attribute is a field related to that tag,'
+            print '# where <tag> may be one of: '+', '.join(validTags) + '.'
+            print '# '
+            print '# Special output:  ... as <"screen"|"csv"|"tex">'
+            print '# Screen is for screen output in a fixed-width font (the default); csv returns comma-separated values, and tex a LaTex-format table.'
+            print '# '
+            print '# Restricted cases: ... where <attribute> is <value>'
+            print '# Only performs the report for matching cases'
+            print '# Also, you may use ... where <attributed> is ["not"] filled, to only match cases where a field is complete/incomplete'
+            print '# '
+            print '# Overall syntax:'
+            print '#   <show> [where] [output]'
+            print '# '
+            print '# Examples:'
+            print '#   show distribution of tlink reltype'
+            print '#   show state of tlink signalid as tex'
+            print '#   show list of instance lemma as csv'
+            print '#   show distribution of timex3 position where sentence is 0'
+            print '#   show distribution of tlink reltype where signalid is filled as tex'
+            
+            continue
+            
+        elif query == 'corpus':
+            print '# corpus: Perform corpus maintenance'
+            print '# '
+            print '# Basic form is:'
+            print '#   corpus <"import"|"use"|"info"|"list"|"verify">'
+            print '# '
+            print '# To load a directory of TimeML files (e.g. a corpus) into a new or existing CAVaT database, the following forms are valid.'
+            print '#   corpus import <corpusName> from <directory>'
+            print '#   corpus import <directory> to <corpusName>'
+            print '# The directory name needs to end in a slash, and CAVaT\'s database user must have the appropriate permissions to create or update the database.'
+            print '# '
+            print '# To choose or change to another corpus:'
+            print '#   corpus use <corpusName>'
+            print '# '
+            print '# To view a list of available corpora (for use with "corpus use"):'
+            print '#   corpus list'
+            print '# '
+            print '# To verify the SQL syntax and version of a corpus'
+            print '#   corpus verify [corpusName]'
+            print '# '
+            print '# Examples:'
+            print '#   corpus list'
+            print '#   corpus import /h/me/timebank/ to timebank_1_2'
+            print '#   corpus verify'
+            print '#   corpus use timebank_1_2'
+            
+            continue
+            
+        elif query == 'debug':
+            print '# debug: Enable / disable debugging mode'
+            print '# '
+            print '# Syntax is:'
+            print '#   debug ["on"|"off"]'
+            print '# '
+            print '# Entering "debug" on its own reports on the current state; debug on and debug off can be used to adjust the value.'
+            print '# Debugging information includes parse tree data and SQL executed, amongst other query-specific data.'
+            
+            continue
+            
+        elif query == 'help':
+            print '# help: View on-line help'
+            print '# '
+            print '# Syntax is:'
+            print '#   help [command]'
+            print '# Where command is a top-level CAVaT command. Enter "help" alone to see a list of those commands.'
+            
+            continue
+            
+        elif query == 'check':
+            print '# check: Run a plug-in module over a document or documents'
+            print '# '
+            print '# Syntax is:'
+            print '#   check <module> in <docIds+|documentNames+|"all">'
+            print '#   check list'
+            print '# '
+            print '# The modules are quite diverse. They are stored in ./modules/ as .py files, which inherit from ./cavatModule.py .'
+            print '# It is recommended that modules support a "help" command, which provides information about running them.'
+            print '# '
+            print '# Examples:'
+            print '#   check list'
+            print '#   check tlink_loop help'
+            print '#   check tlink_loop in wsj_0136.tml'
+            print '#   check tlink_loop in 5 6 7 8'
+            
+            
+            continue
+            
+        
         
     elif t.action == 'check':
         
@@ -530,7 +638,7 @@ while not finishedProcessing:
     
     
     else:
-        errorMsg("Unsupported command")
+        errorMsg("Unsupported command; please enable debug ('debug on'), try again, and contact support with the output.")
     
     
     
