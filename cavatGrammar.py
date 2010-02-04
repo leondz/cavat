@@ -117,7 +117,7 @@ cavatStmt << (
                     
                     |
                     
-                    verify_.setResultsName("verify")
+                    verify_.setResultsName("verify") + Optional(alphaNums_).setResultsName("database")
                     
                     )
                 |
