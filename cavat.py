@@ -177,12 +177,26 @@ while not finishedProcessing:
         # unconditional? i.e., is there no where clause? if not, we're processing one of the more simple queries.
         
         # make sure that the request output field exists
-        if t.result.tag in (validTags):
-            sqlTable = t.result.tag.lower() + 's'
-            sqlFieldName = t.result.property
+        
+        tag = None
+        try:
+            tag = str(t.result.tag)
+        except AttributeError:
+            try:
+                tag = str(t.tag)
+            except AttributeError:
+                errorMsg('Not sure which tag to operate on; t.tag and t.result.tag both empty. Please enable debug, enter your query again, and contact support.')
+                continue
+        
+        if tag in (validTags):
+            sqlTable = tag.lower() + 's'
+            try:
+                sqlFieldName = t.result.property
+            except:
+                sqlFieldName = ''
             
         else:
-            errorMsg("tag '" + t.result.tag + "' unsupported, expected one of " + validTags)
+            errorMsg("tag '" + tag + "' unsupported, expected one of " + validTags)
             continue
         
         sqlField = sqlFieldName
@@ -258,7 +272,7 @@ while not finishedProcessing:
             filledPct = "%0.1f" % (float(filledTags) * 100 / totalTags)
             unfilledPct = "%0.1f" % (float(unfilledTags) * 100 / totalTags)
             
-            results.append(['State of ' + t.result.tag.capitalize() + ' ' + sqlFieldName + whereCaption,  'Count'])
+            results.append(['State of ' + tag.capitalize() + ' ' + sqlFieldName + whereCaption,  'Count'])
             results.append([sqlFieldName + ' filled',  '(' + filledPct + '%)',  filledTags])
             results.append([sqlFieldName + ' unfilled',  '(' + unfilledPct + '%)',  unfilledTags])
             
@@ -284,10 +298,10 @@ while not finishedProcessing:
             results = list(db.cursor.fetchall())
             
             if t.report == 'distribution':
-                results.insert(0,  [t.result.tag.capitalize() + ' ' + sqlFieldName + whereCaption,  'Frequency',  'Proportion'])
+                results.insert(0,  [tag.capitalize() + ' ' + sqlFieldName + whereCaption,  'Frequency',  'Proportion'])
                 results.append(['Total',  totalRecords])
             elif t.report == 'list':
-                results.insert(0,  [t.result.tag.capitalize() + ' ' + sqlFieldName + whereCaption])
+                results.insert(0,  [tag.capitalize() + ' ' + sqlFieldName + whereCaption])
         
         # detach result-printing from result-gathering, so that we can print results regardless of where the data come from (e.g. sqlQuery, manual calculations)
         # output results as a list - switch this depending on output request (tsv, csv, latex would be handy - latex with headers bold, first column left aligned all others right)

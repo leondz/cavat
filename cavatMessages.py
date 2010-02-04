@@ -115,8 +115,12 @@ def outputResults(results,  reportType,  format = 'screen'):
                 # convert row to list (originally tuple from mysql result), and then re-order to give count / label
                 row = list(row)
                 [row[0],  row[1]] = [row[1],  row[0]]
-                row[2] = round_figures(float(row[2]) * 100, 3)
-                print str(row[0]).rjust(rightPad,  ' ') + screenSeparator + row[1] + screenSeparator + str(row[2]) + '%'
+                
+                if len(row) > 2:
+                    row[2] = round_figures(float(row[2]) * 100, 3)
+                    print str(row[0]).rjust(rightPad,  ' ') + screenSeparator + row[1] + screenSeparator + str(row[2]) + '%'
+                else:
+                    print str(row[0]).rjust(rightPad,  ' ') + screenSeparator + row[1]
                 
             elif reportType == 'state':
                 # re-order columns, so that we have count / state / percentage

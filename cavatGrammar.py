@@ -32,28 +32,16 @@ reportType = oneOf("list distribution state",  caseless = True)
 outputFormat = oneOf("screen csv tsv tex",  caseless = True)
 conditionValue = Group(Word(nums) | QuotedString('"\''))
 state = oneOf("filled unfilled",  caseless = True)
+tlinkPositionedArg = oneOf("arg1 arg2 signal",  caseless = True)
+distanceUnits = oneOf("words sentences",  caseless = True)
 
 # markers
 EOL = Suppress(LineEnd())
 
 # joining particles
-all_ = Keyword("all",  caseless = True)
-as_ = Keyword("as",  caseless = True)
-filled_ = Keyword("filled",  caseless = True)
-from_ = Keyword("from",  caseless = True)
-import_ = Keyword("import",  caseless = True)
-in_ = Keyword("in",  caseless = True)
-info_ = Keyword("info",  caseless = True)
-is_ = Keyword("is",  caseless = True)
-list_ = Keyword("list",  caseless = True)
-not_ = Keyword("not",  caseless = True)
-of_ = Keyword("of",  caseless = True)
-state_ = Keyword("state",  caseless = True)
-to_ = Keyword("to",  caseless = True)
-unfilled_ = Keyword("unfilled",  caseless = True)
-use_ = Keyword("use",  caseless = True)
-verify_ = Keyword("verify",  caseless = True)
-where_ = Keyword("where",  caseless = True)
+particles = ['all',  'arg1',  'arg2',  'as',  'distance',  'filled', 'from', 'import', 'in', 'info', 'is', 'list', 'not', 'of', 'signal', 'state', 'to', 'unfilled', 'use', 'verify', 'where']
+for particle in particles:
+    exec('%s_ = Keyword("%s", caseless = True)' % (particle,  particle))
 
 # field specifiers, consisting of a tag name and fields of that tag
 eventProperty = Keyword("event",  caseless = True).setResultsName("tag") + oneOf(eventFields,  caseless = True).setResultsName("property")
@@ -63,10 +51,10 @@ timex3Property = Keyword("timex3",  caseless = True).setResultsName("tag") + one
 tlinkProperty = Keyword("tlink",  caseless = True).setResultsName("tag") + oneOf(tlinkFields,  caseless = True).setResultsName("property")
 
 
-
 # field name property, build from field specifiers
 fieldName = Group(eventProperty | instanceProperty | signalProperty | timex3Property | tlinkProperty)
 
+# basic where clause
 simpleWhereClause = (
             where_  
             + oneOf(' '.join([eventFields,  instanceFields,  signalFields,  timex3Fields,  tlinkFields])).setResultsName("conditionField")
@@ -77,19 +65,31 @@ simpleWhereClause = (
                 )
         )
 
-
+# top-level statement definition
 cavatStmt << (
               
                 helpToken.setResultsName("action") + Optional(OneOrMore(alphaNums_).setResultsName("query"))
                 
                 |
               
-                showToken.setResultsName("action") + reportType.setResultsName("report") + of_ + fieldName.setResultsName("result") 
+                showToken.setResultsName("action") + reportType.setResultsName("report") + of_ + 
+                    (
                     
-                    + Optional(simpleWhereClause.setResultsName("condition"))
+                        tag.setResultsName("tag") + tlinkPositionedArg.setResultsName("start") + tlinkPositionedArg.setResultsName("end") + distance_.setResultsName('distance')
+                        
+                        + Optional(in_ + distanceUnits.setResultsName('units'))
+                        
+                    |
+                    
+                        fieldName.setResultsName("result") 
+                        
+                        + Optional(simpleWhereClause.setResultsName("condition"))
+                        
+                    )
+                    
 
                     + Optional(as_ + outputFormat.setResultsName("format"))
-
+                    
                 |
                 
                 corpusToken.setResultsName("action")  +
