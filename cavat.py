@@ -13,6 +13,7 @@ import atexit
 import ConfigParser
 
 from cavatGrammar import cavatStmt,  validTags, numericFields
+import cavatGrammar
 from cavatMessages import *
 import cavatDebug
 import db
@@ -115,10 +116,10 @@ while not finishedProcessing:
             
         except KeyboardInterrupt:
             errorMsg('Cancelled',  True)
-            break
+            continue
             
         except EOFError:
-            errorMsg('EOF')
+            errorMsg('EOF',  True)
             break
         
     else:
@@ -180,7 +181,7 @@ while not finishedProcessing:
 
         # unconditional? i.e., is there no where clause? if not, we're processing one of the more simple queries.
         
-        # make sure that the request output field exists
+        # make sure that the request output field exists in out command parse
         
         tag = None
         try:
@@ -192,8 +193,19 @@ while not finishedProcessing:
                 errorMsg('Not sure which tag to operate on; t.tag and t.result.tag both empty. Please enable debug, enter your query again, and contact support.')
                 continue
         
+        tag = tag.lower()
+        
+        # check that we support this tag
         if tag in (validTags):
-            sqlTable = tag.lower() + 's'
+            
+            # check for queries on events that use eventinstance attributes
+            if tag == 'event' and t.result.property in cavatGrammar.instanceFields.split(' '):
+                sqlTable = 'instances'
+            else:
+                # db format uses tlinks instead of tlink; it's uniform
+                sqlTable = tag + 's'
+                
+            # which field would we like to see?
             try:
                 sqlFieldName = t.result.property
             except:
@@ -203,26 +215,49 @@ while not finishedProcessing:
             errorMsg("tag '" + tag + "' unsupported, expected one of " + validTags)
             continue
         
+        # sqlField is the one that we'll run our SQL query on; sqlFieldName is for presentation
         sqlField = sqlFieldName
         
         if t.condition:
             
-            if not t.state:
+            # check if we need to join tables
+            # for when tag == event: this will be the case if either conditionField is in instances and sqlTable == events, or, if conditionField isn't in instances and sqlTable == instances
+            # joins will be different, in the above 2 cases
+            dualTable_ei = False
+            if (t.conditionField in cavatGrammar.instanceFields.split(' ') and sqlTable == 'events'):
+                dualTable_ei = True
+                sqlField = 'e.' + sqlField
+            if (t.conditionField not in cavatGrammar.instanceFields.split(' ') and sqlTable == 'instances'):
+                dualTable_ei = True
+                sqlField = 'i.' + sqlField
             
+            # add both tables to the list, and include where clauses to bind them together
+            if dualTable_ei:
+                sqlTable = 'events e, instances i'
+                sqlWheres.append('e.doc_id = i.doc_id')
+                sqlWheres.append('i.eventID = e.eid')
+            
+            if not t.state:
+                
+                # just match condition value
                 if not t.not_:
                     sqlWheres.append(t.condition.conditionField +' = "' + t.condition.conditionValue+'"')
                     whereCaption = ' when ' + t.condition.conditionField.capitalize() + ' is "' + t.condition.conditionValue + '"'
                     
+                # (or match anything but)
                 else:
                     sqlWheres.append(t.condition.conditionField +' <> "' + t.condition.conditionValue+'"')
                     whereCaption = ' when ' + t.condition.conditionField.capitalize() + ' differs from "' + t.condition.conditionValue + '"'
                 
             else:
+            # handle "state [not] <filled|unfilled>" conditions
                 
+                # state filled (also state not unfilled)
                 if (not t.not_ and t.state.lower() == 'filled') or (t.not_ and t.state.lower() == 'unfilled'):
                     sqlWheres.append(t.condition.conditionField +' IS NOT NULL')
                     whereCaption = ' when ' + t.condition.conditionField.capitalize() + ' is defined'
                     
+                # state unfilled (state not filled)
                 else:
                     sqlWheres.append(t.condition.conditionField +' IS NULL')
                     whereCaption = ' when ' + t.condition.conditionField.capitalize() + ' is not defined'
