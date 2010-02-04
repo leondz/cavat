@@ -218,7 +218,14 @@ while not finishedProcessing:
             # build a distribution report. here we will show unique values for a field, as well as their frequency in the selected corpus, showing most frequent first.
             # would be great to add a percentage column
             sqlGroup = ' GROUP BY ' + sqlFieldName
-            sqlField = sqlFieldName + ', COUNT(' + sqlFieldName + ') AS count '
+            sqlCount = 'COUNT(' + sqlFieldName + ') AS count '
+            
+            # run a quick pre-query to see the total number of results returned
+            if not runQuery('SELECT '+ sqlCount + ' FROM ' + sqlTable + ' ' + buildSqlWhereClause(sqlWheres)):
+                continue
+            
+            totalRecords = db.cursor.fetchone()[0]
+            sqlField = sqlFieldName + ', ' + sqlCount + ', CAST((COUNT('+sqlFieldName+')/'+str(totalRecords)+') AS DECIMAL(10,10)) AS percent'
 
             # if we are generating a report about a numeric value, sort the table by that value, not by frequency; this way round, it's easier to spot lumps / import into a histogram
             if (sqlTable + '.' + sqlFieldName).lower() in numericFields:
@@ -277,7 +284,8 @@ while not finishedProcessing:
             results = list(db.cursor.fetchall())
             
             if t.report == 'distribution':
-                results.insert(0,  [t.result.tag.capitalize() + ' ' + sqlFieldName + whereCaption,  'Frequency'])
+                results.insert(0,  [t.result.tag.capitalize() + ' ' + sqlFieldName + whereCaption,  'Frequency',  'Proportion'])
+                results.append(['Total',  totalRecords])
             elif t.report == 'list':
                 results.insert(0,  [t.result.tag.capitalize() + ' ' + sqlFieldName + whereCaption])
         

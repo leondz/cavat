@@ -1,5 +1,9 @@
 import sys
+import math
 from cavatDebug import debug
+
+def round_figures(x, n):
+    return round(x, int(n - math.ceil(math.log10(abs(x)))))
 
 def errorMsg(message,  LF = False):
     
@@ -19,7 +23,7 @@ def latexSafe(data):
 
 def outputResults(results,  reportType,  format = 'screen'):
 
-    screenSeparator = '  '
+    screenSeparator = '  \t '
     rightPad = 11
 
     global debug
@@ -59,8 +63,19 @@ def outputResults(results,  reportType,  format = 'screen'):
         print "\\hline"
         print '\\textbf{' + '} & \\textbf{'.join(header) + '} \\\\'
         print "\\hline"
+
         
         for row in results:
+            
+            row = list(row)
+            
+            if reportType == 'distribution':
+                if len(row) > 2:
+                    row[2] = str(round_figures(float(row[2]) * 100, 3)) + '%'
+                else:
+                    print '\\hline'
+                    row.append('')
+            
             
             row = map(str,  row)
             row = map(latexSafe,  row)
@@ -100,7 +115,8 @@ def outputResults(results,  reportType,  format = 'screen'):
                 # convert row to list (originally tuple from mysql result), and then re-order to give count / label
                 row = list(row)
                 [row[0],  row[1]] = [row[1],  row[0]]
-                print str(row[0]).rjust(rightPad,  ' ') + screenSeparator + row[1]
+                row[2] = round_figures(float(row[2]) * 100, 3)
+                print str(row[0]).rjust(rightPad,  ' ') + screenSeparator + row[1] + screenSeparator + str(row[2]) + '%'
                 
             elif reportType == 'state':
                 # re-order columns, so that we have count / state / percentage
