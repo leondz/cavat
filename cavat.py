@@ -198,18 +198,29 @@ while not finishedProcessing:
         # check that we support this tag
         if tag in (validTags):
             
+            # which field would we like to see?
+            try:
+                sqlFieldName = t.result.property
+            except:
+                sqlFieldName = ''
+            
+            
             # check for queries on events that use eventinstance attributes
             if tag == 'event' and t.result.property in cavatGrammar.instanceFields.split(' '):
                 sqlTable = 'instances'
             else:
                 # db format uses tlinks instead of tlink; it's uniform
                 sqlTable = tag + 's'
-                
-            # which field would we like to see?
-            try:
-                sqlFieldName = t.result.property
-            except:
-                sqlFieldName = ''
+            
+            dualTable_ts = False
+            if tag=='tlink' and t.result.property == 'signaltext':
+                sqlTable = 'tlinks t, signals s'
+                sqlWheres.append('t.doc_id = s.doc_id')
+                sqlWheres.append('t.signalID = s.sid')
+                sqlFieldName = 's.text'
+                dualTable_ts = True
+            
+            
             
         else:
             errorMsg("tag '" + tag + "' unsupported, expected one of " + validTags)
@@ -224,6 +235,7 @@ while not finishedProcessing:
             # for when tag == event: this will be the case if either conditionField is in instances and sqlTable == events, or, if conditionField isn't in instances and sqlTable == instances
             # joins will be different, in the above 2 cases
             dualTable_ei = False
+            
             if (t.conditionField in cavatGrammar.instanceFields.split(' ') and sqlTable == 'events'):
                 dualTable_ei = True
                 sqlField = 'e.' + sqlField
@@ -237,30 +249,48 @@ while not finishedProcessing:
                 sqlWheres.append('e.doc_id = i.doc_id')
                 sqlWheres.append('i.eventID = e.eid')
             
+            conditionField = t.condition.conditionField
+            conditionFieldName = conditionField.capitalize()
+        
+            
+            # do we need to join in another table?
+            if conditionField == 'signaltext':
+                conditionField = 's.text'
+                conditionFieldName = 'signal text'
+                
+                # otherwise, this will already be included
+                if not dualTable_ts:
+                    sqlTable = 'tlinks t, signals s'
+                    sqlWheres.append('t.doc_id = s.doc_id')
+                    sqlWheres.append('t.signalID = s.sid')
+            
+            
+            # is this distribution report not a state report - e.g., does it list every class and its frequency?
             if not t.state:
+                
                 
                 # just match condition value
                 if not t.not_:
-                    sqlWheres.append(t.condition.conditionField +' = "' + t.condition.conditionValue+'"')
-                    whereCaption = ' when ' + t.condition.conditionField.capitalize() + ' is "' + t.condition.conditionValue + '"'
+                    sqlWheres.append(conditionField +' = "' + t.condition.conditionValue+'"')
+                    whereCaption = ' when ' + conditionFieldName + ' is "' + t.condition.conditionValue + '"'
                     
                 # (or match anything but)
                 else:
-                    sqlWheres.append(t.condition.conditionField +' <> "' + t.condition.conditionValue+'"')
-                    whereCaption = ' when ' + t.condition.conditionField.capitalize() + ' differs from "' + t.condition.conditionValue + '"'
+                    sqlWheres.append(conditionField +' <> "' + t.condition.conditionValue+'"')
+                    whereCaption = ' when ' + conditionFieldName + ' differs from "' + t.condition.conditionValue + '"'
                 
             else:
             # handle "state [not] <filled|unfilled>" conditions
                 
                 # state filled (also state not unfilled)
                 if (not t.not_ and t.state.lower() == 'filled') or (t.not_ and t.state.lower() == 'unfilled'):
-                    sqlWheres.append(t.condition.conditionField +' IS NOT NULL')
-                    whereCaption = ' when ' + t.condition.conditionField.capitalize() + ' is defined'
+                    sqlWheres.append(conditionField +' IS NOT NULL')
+                    whereCaption = ' when ' + conditionFieldName + ' is defined'
                     
                 # state unfilled (state not filled)
                 else:
-                    sqlWheres.append(t.condition.conditionField +' IS NULL')
-                    whereCaption = ' when ' + t.condition.conditionField.capitalize() + ' is not defined'
+                    sqlWheres.append(conditionField +' IS NULL')
+                    whereCaption = ' when ' + conditionFieldName + ' is not defined'
 
         # process report type
         # a list report just shows the values as they are, without any accompanying data

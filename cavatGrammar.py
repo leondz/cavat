@@ -11,7 +11,7 @@ eventFields = "doc_id eid class text lemma position sentence eventid signalid po
 instanceFields = "doc_id eiid eventid signalid pos tense aspect cardinality polarity modality"
 signalFields = "doc_id sid text position sentence"
 timex3Fields = "doc_id tid type functionindocument beginpoint endpoint quant freq temporalfunction value mod anchortimeid text position sentence"
-tlinkFields = "doc_id lid origin signalid arg1 reltype arg2"
+tlinkFields = "doc_id lid origin signalid arg1 reltype arg2 signaltext"
 
 # the top-level command
 cavatStmt = Forward()
