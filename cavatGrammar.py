@@ -133,14 +133,17 @@ cavatStmt << (
 
                         (
                         alphaNums_.setResultsName("module") + 
-                        help_.setResultsName("help")
-                        |
+                        
                             (
-                                in_ + 
+                            help_.setResultsName("help")
+                            |
                                 (
-                                OneOrMore(fileName).setResultsName("target")
-                                |
-                                all_.setResultsName("target")
+                                    in_ + 
+                                    (
+                                    OneOrMore(fileName).setResultsName("target")
+                                    |
+                                    all_.setResultsName("target")
+                                    )
                                 )
                             )
                         )

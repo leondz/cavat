@@ -16,6 +16,8 @@ class tlink_loop(CavatModule):
     def checkDocument(self,  doc_id):
         
         if not runQuery('SELECT docname FROM documents WHERE id = ' + doc_id):
+            # document not found
+            print '! No document in corpus with id ' + doc_id
             return
         
         results = db.cursor.fetchone()
@@ -24,18 +26,25 @@ class tlink_loop(CavatModule):
         
         if cavatDebug.debug:
             print "# Checking " + docName + ' (id ' + doc_id + ')'
+
+        loopedTlinks = []
+
+        # look at where we're linking an event instance to itself
+        if not runQuery('SELECT lid,relType, arg1 FROM tlinks WHERE arg1 = arg2 AND doc_id = ' + doc_id + ' ORDER BY CAST(SUBSTRING(lid,2) AS SIGNED)'):
+            return
+        
+        loopedTlinks = db.cursor.fetchall()
+        
         
         # look at where we're linking an event instance to itself
         if not runQuery('SELECT lid,relType, arg1 FROM tlinks WHERE arg1 = arg2 AND doc_id = ' + doc_id + ' ORDER BY CAST(SUBSTRING(lid,2) AS SIGNED)'):
             return
         
-        results = db.cursor.fetchall()
-        
-        if results:
+        if loopedTlinks:
             
             print "# Checking " + docName + ' (id ' + doc_id + ')'
             
-            for row in results: 
+            for row in loopedTlinks: 
                 print 'TLINK ID %s matches, type %s, event %s' % (row[0],  row[1],  row[2])
         else:
             if cavatDebug.debug:
