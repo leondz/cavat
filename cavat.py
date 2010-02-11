@@ -689,8 +689,20 @@ while not finishedProcessing:
                     
                     docList.append(str(results[0]))
                 
+                
             elif sourceList[0].isdigit():
-                pass
+                
+                for source in sourceList:
+                    if not runQuery('SELECT id FROM documents WHERE id = "' + source + '"'):
+                        continue
+                    
+                    results = db.cursor.fetchone()
+                    
+                    if not results:
+                        errorMsg('Document ID "' + source + '" not in corpus')
+                        continue
+                    
+                    docList.append(source)
                 
             else:
                 errorMsg('Unsure how to interpret document list')
