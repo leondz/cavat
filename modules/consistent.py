@@ -235,3 +235,5 @@ class consistent(CavatModule):
             print 'Consistent'
         if self.superVerbose:
             print self.database
+        
+        return True

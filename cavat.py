@@ -715,7 +715,10 @@ while not finishedProcessing:
                 print 'Running check on doc_ids: ' + str(docList)
 
             for doc in docList:
-                checker.checkDocument(doc)
+                checkResult = checker.checkDocument(doc)
+            
+            if len(docList) == 1 and checkResult: # if there's just one document, and it passes, we may not see any other output - so inform user of result.
+                print 'Check OK.'
     
     
     else:

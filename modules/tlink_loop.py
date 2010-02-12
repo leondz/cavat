@@ -67,6 +67,11 @@ class tlink_loop(CavatModule):
             
             for row in loopedTlinks: 
                 print 'TLINK ID %s matches, type %s, event %s / %s' % (row[0],  row[1],  row[2],  row[3])
+            
+            return False
+            
         else:
             if cavatDebug.debug:
                 print 'No looping TLINKs found in this document.'
+            
+            return True
