@@ -27,7 +27,7 @@ class consistent(CavatModule):
                                         'begins': {'a1.b1':'=',  'a2.b2':'<'}, 
                                         'ends': {'a2.b2':'=',  'b1.a1':'<'}, 
                                         'begun_by': {'a1.b1':'=',  'b2.a2':'<'}, 
-                                        'ended_by': {'b2.a2':'<',  'a1.b1':'<'}, 
+                                        'ended_by': {'b2.a2':'=',  'a1.b1':'<'}, 
                                         'during_inv': {'a1.b1':'=',  'a2.b2':'='}
                                         }
 
