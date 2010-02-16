@@ -46,24 +46,32 @@ class consistent(CavatModule):
         # check for presence of fact in agenda or database. return true if it's already there.
         if fact[0] in self.database.keys():
             if self.database[fact[0]] != fact[1]:
+                if self.superVerbose:
+                    print "! Already asserted on database that relation is ",  self.database[fact[0]]
                 return False
             else:
                 return True
         
         if fact[0] in self.agenda.keys():
             if self.agenda[fact[0]] != fact[1]:
+                if self.superVerbose:
+                    print "! Already asserted on agenda that relation is ",  self.agenda[fact[0]]
                 return False
             else:
                 return True
         
         if reversed in self.agenda.keys():
             if self.agenda[reversed] == fact[1] and fact[1] != '=':
+                if self.superVerbose:
+                    print '! Relation already exists on agenda in opposite direction, ' + reversed + ' ' + self.agenda[reversed]
                 return False
             else:
                 return True
         
         if reversed in self.database.keys():
             if self.database[reversed] == fact[1] and fact[1] != '=':
+                if self.superVerbose:
+                    print '! Relation already exists on database in opposite direction, ' + reversed + ' ' + self.database[reversed]
                 return False
             else:
                 return True
@@ -133,7 +141,7 @@ class consistent(CavatModule):
        
         # add tlinks to agenda
         
-        if not runQuery('SELECT arg1, reltype, arg2 FROM tlinks WHERE doc_id = ' + doc_id):
+        if not runQuery('SELECT arg1, reltype, arg2, lid FROM tlinks WHERE doc_id = ' + doc_id):
             return
         
         tlinks = db.cursor.fetchall()
@@ -148,7 +156,7 @@ class consistent(CavatModule):
                 
                 assertion = [k,  v]
                 if self.superVerbose:
-                    print 'TLINK ',  tlink[0],  tlink [1],  tlink[2], ' suggests ',  k,  v
+                    print 'TLINK', tlink[3],   tlink[0],  tlink [1],  tlink[2], ' suggests ',  k,  v
                     print "# Asserting " + str(assertion)
                 
                 if self.addToAgenda(assertion):
