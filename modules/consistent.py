@@ -40,6 +40,9 @@ class consistent(CavatModule):
         args = fact[0].split('.')
         reversed = args[1] + '.' + args[0]
         
+        if args[0] == args[1] and fact[1] != '=':
+            return False
+        
         # check for presence of fact in agenda or database. return true if it's already there.
         if fact[0] in self.database.keys():
             if self.database[fact[0]] != fact[1]:
@@ -215,7 +218,7 @@ class consistent(CavatModule):
                     r3 = '='
                 
                 if self.superVerbose:
-                    print 'new rule: if %s %s %s ^ %s %s %s => %s %s %s' % (p1,  r1,  p2,  p3,  r2,  p4,  p1,  r3,  p4)
+                    print 'new rule:  %s %s %s  (because  %s %s %s  ^  %s %s %s )' % (p1,  r3,  p4,  p1,  r1,  p2,  p3,  r2,  p4)
                 
                 if not self.addToAgenda([propositionKey,  r3]):
                     args = propositionKey.split('.')
