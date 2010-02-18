@@ -66,7 +66,10 @@ class tlink_loop(CavatModule):
             print "# Checking " + docName + ' (id ' + doc_id + ')'
             
             for row in loopedTlinks: 
-                print 'TLINK ID %s matches, type %s, event %s / %s' % (row[0],  row[1],  row[2],  row[3])
+                if row[2] == row[3]:
+                    print 'TLINK ID %s loops directly (instanceID match), type %s, event %s / %s' % (row[0],  row[1],  row[2],  row[3])
+                else:
+                    print 'TLINK ID %s may be a loop (eventID match), type %s, event %s / %s - check document manually' % (row[0],  row[1],  row[2],  row[3])
             
             return False
             
