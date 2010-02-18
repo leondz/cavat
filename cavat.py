@@ -724,6 +724,10 @@ while not finishedProcessing:
                 
             
             
+            if len(docList) == 0:
+                errorMsg('No valid document references to check')
+                continue
+            
             allGood = True
             
             # for each doc in list, call the module
@@ -734,8 +738,8 @@ while not finishedProcessing:
                 checkResult = checker.checkDocument(doc)
                 allGood = allGood and checkResult
             
-            if allGood: # if there's just one document, and it passes, we may not see any other output - so inform user of result.
-                print 'Check OK.'
+            if allGood: # if the documents pass, we may not see any other output - so inform user of result.
+                print '# Check OK.'
     
     
     else:
