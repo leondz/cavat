@@ -409,6 +409,21 @@ while not finishedProcessing:
             for row in results:
                 print str(row[0]).rjust(30,  ' ') + ":  " + row[1]
             
+            if not runQuery('SELECT COUNT(*) FROM documents'):
+                continue
+            
+            results = db.cursor.fetchone()
+            
+            print "\n# Total %s documents in this corpus, including:" % (results)
+            
+            for tag in validTags:
+                if not runQuery('SELECT COUNT(*) FROM ' + tag + 's'):
+                    continue
+                
+                results = db.cursor.fetchone()
+                
+                print '# - %s %ss' % (str(results[0]).rjust(6, ' '), tag.upper())
+                
             
         elif t.import_:
             
