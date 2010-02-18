@@ -133,8 +133,6 @@ class ImportTimeML:
     def importCorpusToDb(self,  directory,  dbName):
         # global vars
 
-        fileList = os.listdir(directory)
-
 
         print >> sys.stderr,  '==============================================================='
         print >> sys.stderr,  'Reading from ' + directory
@@ -167,10 +165,10 @@ class ImportTimeML:
             if len(creationSql.strip()) > 0:
                 self.cursor.execute(creationSql)
 
-        #tables = ['documents', 'events', 'instances', 'signals', 'timex3s', 'tlinks',  'info']
-        #for table in tables:
-        #    cursor.execute('TRUNCATE ' + table)
-
+        
+        # read directory
+        fileList = os.listdir(directory)
+        fileList.sort()
 
         for fileName in fileList:
             
@@ -193,12 +191,16 @@ class ImportTimeML:
             self.cursor.execute('INSERT INTO documents(docname) VALUES ("' + fileName + '")')
             self.doc_id = int(self.cursor.lastrowid)
 
+            print fileName,  'as',  self.doc_id
+
 
             # get minidom data - element attribute cataloguing
 
-            timemldoc  = minidom.parse(directory+fileName)
-            
-            print fileName,  'as',  self.doc_id
+            try:
+                timemldoc  = minidom.parse(directory+fileName)
+            except:
+                print 'Failed to parse'
+                return
 
             eventNodes = timemldoc.getElementsByTagName('EVENT')
             makeInstanceNodes = timemldoc.getElementsByTagName('MAKEINSTANCE')
