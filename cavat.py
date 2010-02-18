@@ -724,6 +724,7 @@ while not finishedProcessing:
                 
             
             
+            allGood = True
             
             # for each doc in list, call the module
             if cavatDebug.debug:
@@ -731,8 +732,9 @@ while not finishedProcessing:
 
             for doc in docList:
                 checkResult = checker.checkDocument(doc)
+                allGood = allGood and checkResult
             
-            if len(docList) == 1 and checkResult: # if there's just one document, and it passes, we may not see any other output - so inform user of result.
+            if allGood: # if there's just one document, and it passes, we may not see any other output - so inform user of result.
                 print 'Check OK.'
     
     

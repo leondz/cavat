@@ -29,7 +29,7 @@ class CavatModule:
 
     def checkDocument(self,  doc_id):
         print 'Dummy check'
-        return
+        return True
 
     def help(self):
         # print out help regarding module usage
