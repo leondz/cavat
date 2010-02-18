@@ -92,18 +92,9 @@ class consistent(CavatModule):
     
     def checkDocument(self,  doc_id):
         
-        if not runQuery('SELECT docname FROM documents WHERE id = ' + doc_id):
-            # document not found
-            print '! No document in corpus with id ' + doc_id
-            return
-        
-        results = db.cursor.fetchone()
-        
-        docName = str(results[0])
-        
-        if cavatDebug.debug:
-            print "# Checking " + docName + ' (id ' + doc_id + ')'
-        
+        docName = self.startup(doc_id)
+        if not docName:
+            return False        
         
         self.database = {}
         self.agenda = {}
@@ -147,6 +138,9 @@ class consistent(CavatModule):
         tlinks = db.cursor.fetchall()
         
         for tlink in tlinks:
+            
+            if self.superVerbose:
+                print '# Processing TLINK', tlink
             
             assertions = self.timemlPointRelations[tlink[1].lower()]
             

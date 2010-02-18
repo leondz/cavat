@@ -35,17 +35,9 @@ class tlink_loop(CavatModule):
     
     def checkDocument(self,  doc_id):
         
-        if not runQuery('SELECT docname FROM documents WHERE id = ' + doc_id):
-            # document not found
-            print '! No document in corpus with id ' + doc_id
-            return
-        
-        results = db.cursor.fetchone()
-        
-        docName = str(results[0])
-        
-        if cavatDebug.debug:
-            print "# Checking " + docName + ' (id ' + doc_id + ')'
+        docName = self.startup(doc_id)
+        if not docName:
+            return False        
 
         loopedTlinks = []
 

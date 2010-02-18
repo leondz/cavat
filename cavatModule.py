@@ -1,4 +1,7 @@
 # parent class for CAVaT
+import db
+from db import runQuery
+import cavatDebug
 
 class CavatModule:
     
@@ -15,6 +18,23 @@ class CavatModule:
         print '# ' + self.moduleName + ' v' + str(self.moduleVersion) + ' loaded'    
     
     
+    def startup(self,  doc_id):
+        
+        if not runQuery('SELECT docname FROM documents WHERE id = ' + doc_id):
+            # document not found
+            print '! No document in corpus with id ' + doc_id
+            return False
+        
+        results = db.cursor.fetchone()
+        
+        docName = str(results[0])
+        
+        if cavatDebug.debug:
+            print "# Checking " + docName + ' (id ' + doc_id + ')'
+        
+        return docName
+    
+    
     def getCompatibility(self,  cavatVersion):
         # given a CAVaT version number, we should return True, False or None (for unknown compatiblity)
         
@@ -28,6 +48,12 @@ class CavatModule:
 
 
     def checkDocument(self,  doc_id):
+        
+        docName = self.startup(doc_id)
+        if not docName:
+            return False        
+
+        
         print 'Dummy check'
         return True
 
