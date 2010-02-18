@@ -15,10 +15,11 @@ class split_graph(CavatModule):
     
     superVerbose = cavatDebug.debug
     printGraphs = True
+    extraStats = True
 
 
     def checkDocument(self,  doc_id):
-        
+
         self.superVerbose = cavatDebug.debug
         
         docName = self.startup(doc_id)
@@ -142,9 +143,13 @@ class split_graph(CavatModule):
                 print '# Checking %s (id %s)' % (docName, doc_id)
             
             
-            print 'Nodes found: %s , linked by %s TLINKS and split into %s subgraphs' % (numNodes,  len(tlinks), numSubgraphs)
-            print 'Isolated subgraphs, that contain just one TLINK: %s  (making up %2.1f%% of all subgraphs / consuming %2.1f%% of all nodes / described by %2.1f%% of all TLINKs);' %  (singleLinkGraphs,  float(singleLinkGraphs)*100 / numSubgraphs,  float(isolatedNodes)*100 / numNodes, float(singleLinkGraphs)*100 / len(tlinks))
-            print 'Mean graph size %1.1f nodes ; largest subgraph (size %d) has %2.1f%% of all nodes' % (float(numNodes) / numSubgraphs,  biggestSubgraph,  float(biggestSubgraph)*100 / numNodes)
+            print 'Subgraphs found: %s - composed of %s nodes and linked by %s TLINKS.' % (numSubgraphs,  numNodes,  len(tlinks))
+            
+            if self.extraStats:
+                print 'Isolated subgraphs, that contain just one TLINK: %s  (making up %2.1f%% of all subgraphs / consuming %2.1f%% of all nodes / described by %2.1f%% of all TLINKs);' %  (singleLinkGraphs,  float(singleLinkGraphs)*100 / numSubgraphs,  float(isolatedNodes)*100 / numNodes, float(singleLinkGraphs)*100 / len(tlinks))
+                print 'Mean graph size %1.1f nodes; largest subgraph (size %d) has %2.1f%% of all nodes.' % (float(numNodes) / numSubgraphs,  biggestSubgraph,  float(biggestSubgraph)*100 / numNodes)
+
+
             
             if self.printGraphs:
                 # measure graph sizes in nodes, not tlinks.
