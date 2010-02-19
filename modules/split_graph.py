@@ -65,26 +65,37 @@ class split_graph(CavatModule):
                         print "pile found ",  graphs[g]
                     
                     # if so, check to see if the other end of the tlink will go anywhere
+                    merged = False
+                    if self.superVerbose:
+                        print 'Checking for merges'
+                    
                     for s,  secondGraph in enumerate(graphs):
                         
-                        if linkAppended:
+                        if merged:
                             break
+                        
+                        if s == g:
+                            continue
                         
                         if self.superVerbose:
                             print 'g %s, s %s' % (g,  s)
                         
-                        for endPoint in secondGraph:
-                            if tlink[1] in endPoint:
-                                
-                                # merge graphs
-                                if self.superVerbose:
-                                    print "pre-merge",  graphs
-                                graphs[g] = union(graphs[g] + secondGraph)
-                                graphs[s].remove
-                                if self.superVerbose:
-                                    print "merge",  graphs
-                                die
-                                break
+                        
+                        if tlink[1] in secondGraph:
+                            
+                            # merge graphs
+                            if self.superVerbose:
+                                print "pre-merge",  graphs
+                            
+                            graphs[g] = graphs[g] | secondGraph
+                            del graphs[s]
+                            
+                            merged = True
+                            
+                            if self.superVerbose:
+                                print "postmerge",  graphs
+                            
+                            break
             
             
             if not linkAppended:
