@@ -2,6 +2,7 @@ from cavatModule import CavatModule
 import db
 from db import runQuery
 import cavatDebug
+from math import log
 
 class split_graph(CavatModule):
     
@@ -17,6 +18,20 @@ class split_graph(CavatModule):
     printGraphs = True
     extraStats = True
 
+
+    def entropy(self,  stacks):
+        total = float(sum(stacks))
+        entropy = -0.0
+        
+        for stack in stacks:
+            
+            if stack <= 0:
+                continue
+            
+            p = float(stack) / total
+            entropy += p * log(p,  total)
+        
+        return -entropy
 
     def checkDocument(self,  doc_id):
 
@@ -159,7 +174,7 @@ class split_graph(CavatModule):
             if self.extraStats:
                 print 'Isolated subgraphs, that contain just one TLINK: %s  (making up %2.1f%% of all subgraphs / consuming %2.1f%% of all nodes / described by %2.1f%% of all TLINKs);' %  (singleLinkGraphs,  float(singleLinkGraphs)*100 / numSubgraphs,  float(isolatedNodes)*100 / numNodes, float(singleLinkGraphs)*100 / len(tlinks))
                 print 'Mean graph size %1.1f nodes; largest subgraph (size %d) has %2.1f%% of all nodes.' % (float(numNodes) / numSubgraphs,  biggestSubgraph,  float(biggestSubgraph)*100 / numNodes)
-
+                print 'Entropy of subgraph sizes: ',  self.entropy(map(len,  graphs))
 
             
             if self.printGraphs:
