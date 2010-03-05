@@ -14,8 +14,11 @@ import ConfigParser
 
 from cavatGrammar import cavatStmt,  validTags, numericFields
 import cavatGrammar
+
 from cavatMessages import *
 import cavatDebug
+import cavatBrowse
+
 import db
 from db import runQuery
 
@@ -742,6 +745,54 @@ while not finishedProcessing:
                 print '# Check OK.'
     
     
+    elif t.action == 'browse':
+        if t.doc:
+            
+            if not dbName:
+                errorMsg('Please select a corpus with "corpus use" first; "corpus list" will show which corpora are available.')
+                continue
+            
+            # fetch document id
+            browsedoc = None
+            
+            if t.target.isdigit():
+                browsedoc = t.target
+            else:
+                if not runQuery('SELECT id FROM documents WHERE docname = "%s"' % (t.target)):
+                    errorMsg('Document %s not found in corpus' % (t.target))
+                    continue
+                browsedoc = db.cursor.fetchone()[0]
+                
+            # set value in cavatBrowse.doc for this corpus
+            print '# Now browsing document id %s in this corpus' % (browsedoc)
+            cavatBrowse.doc[dbName] = int(browsedoc)
+        
+        elif t.tag:
+            if t.tag not in validTags:
+                errorMsg('Unsupported tag: ' + t.tag)
+                continue
+            
+            if dbName not in cavatBrowse.doc.keys():
+                errorMsg('Please choose a document with "browse doc <doc_id|docname>" first.')
+                continue
+            
+            idPrefix = cavatGrammar.idPrefixes[t.tag]
+            
+            if t.value.isdigit():
+                value = idPrefix + t.value
+            else:
+                value = t.value.lower()
+            
+            if not runQuery('SELECT * FROM %ss WHERE doc_id = %s AND %s = "%s"' % (t.tag,  cavatBrowse.doc[dbName], idPrefix + 'id',  value)):
+                continue
+            
+            results = list(db.cursor.fetchone())
+            fields = [name for (name, a, b, c, d, e, f) in db.cursor.description]
+            browsed = dict(zip(fields, results))
+            
+            for k, v in browsed.iteritems():
+                print "%s:  %s" % (k.ljust(13),  v)
+        
     else:
         errorMsg("Unsupported command; please enable debug ('debug on'), try again, and contact support with the output.")
     

@@ -7,7 +7,7 @@ from math import log
 class split_graph(CavatModule):
     
     moduleName = 'Split graph detection'
-    moduleDescription = 'Find out if a document\'s TLINKs form more than one independent graph'
+    moduleDescription = 'Find out if a document\'s TLINKs form more than one independent graph, and report on the subgraphs if they do.'
     
     moduleVersion = '1'
     

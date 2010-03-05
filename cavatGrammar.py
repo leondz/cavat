@@ -13,6 +13,8 @@ signalFields = "doc_id sid text position sentence"
 timex3Fields = "doc_id tid type functionindocument beginpoint endpoint quant freq temporalfunction value mod anchortimeid text position sentence"
 tlinkFields = "doc_id lid origin signalid arg1 reltype arg2 signaltext"
 
+idPrefixes = {'event': 'e',  'instance':'ei',  'signal':'s',  'timex3':'t',  'tlink':'l'}
+
 # the top-level command
 cavatStmt = Forward()
 
@@ -22,6 +24,7 @@ debugToken = Keyword("debug",  caseless = True)
 corpusToken = Keyword("corpus",  caseless = True)
 helpToken = Keyword("help",  caseless = True)
 checkToken = Keyword("check",  caseless = True)
+browseToken = Keyword("browse",  caseless = True)
 
 # parameter values
 onOff = oneOf('on off',  caseless = True)
@@ -30,6 +33,7 @@ alphaNums_ = Word(alphanums + "_")
 fileName = Word(alphanums + "_-.+%/")
 reportType = oneOf("list distribution state",  caseless = True)
 outputFormat = oneOf("screen csv tsv tex",  caseless = True)
+browseFormat = oneOf("screen timeml csv",  caseless=True)
 conditionValue = Group(Word(nums) | QuotedString('"\''))
 state = oneOf("filled unfilled",  caseless = True)
 tlinkPositionedArg = oneOf("arg1 arg2 signal",  caseless = True)
@@ -39,7 +43,7 @@ distanceUnits = oneOf("words sentences",  caseless = True)
 EOL = Suppress(LineEnd())
 
 # joining particles
-particles = ['all',  'arg1',  'arg2',  'as',  'distance',  'filled', 'from', 'help', 'import', 'in', 'info', 'is', 'list', 'not', 'of', 'signal', 'state', 'to', 'unfilled', 'use', 'verify', 'where']
+particles = ['all',  'arg1',  'arg2',  'as',  'distance',  'doc', 'filled', 'from', 'help', 'import', 'in', 'info', 'is', 'list', 'not', 'of', 'signal', 'state', 'to', 'unfilled', 'use', 'verify', 'where']
 for particle in particles:
     exec('%s_ = Keyword("%s", caseless = True)' % (particle,  particle))
 
@@ -131,23 +135,34 @@ cavatStmt << (
                     list_.setResultsName("list")
                     |
 
+                    (
+                    alphaNums_.setResultsName("module") + 
+                    
                         (
-                        alphaNums_.setResultsName("module") + 
-                        
-                            (
                             help_.setResultsName("help")
+                            
                             |
+                            
+                            (
+                                in_ + 
                                 (
-                                    in_ + 
-                                    (
-                                    OneOrMore(fileName).setResultsName("target")
-                                    |
-                                    all_.setResultsName("target")
-                                    )
+                                OneOrMore(fileName).setResultsName("target")
+                                |
+                                all_.setResultsName("target")
                                 )
                             )
                         )
                     )
+                )
+            
+                |
+            
+                browseToken.setResultsName("action") + 
+                    (
+                    doc_.setResultsName("doc") + fileName.setResultsName("target") 
+                    |
+                    tag.setResultsName("tag") + alphaNums_.setResultsName("value") + Optional(as_ + browseFormat.setResultsName("format"))
+                )
                 ) + EOL
 
 
