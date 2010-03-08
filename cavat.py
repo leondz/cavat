@@ -790,8 +790,10 @@ while not finishedProcessing:
             fields = [name for (name, a, b, c, d, e, f) in db.cursor.description]
             browsed = dict(zip(fields, results))
             
-            for k, v in browsed.iteritems():
-                print "%s:  %s" % (k.ljust(13),  v)
+            if t.format:
+                outputBrowse(browsed,  t.tag,  t.format)
+            else:
+                outputBrowse(browsed,  t.tag)
         
     else:
         errorMsg("Unsupported command; please enable debug ('debug on'), try again, and contact support with the output.")

@@ -130,3 +130,47 @@ def outputResults(results,  reportType,  format = 'screen'):
                 
             else:
                 print "\t".join(row)
+
+
+def outputBrowse(browsed, tag, format = 'screen'):
+
+    if format == 'screen':
+        
+        for k, v in browsed.iteritems():
+            print "%s:  %s" % (k.ljust(13),  v)
+
+    elif format == 'timeml':
+        
+        tagOutput = '<' + tag.upper()
+        
+        for k, v in browsed.iteritems():
+            
+            if v is None: # all columns will be returned from db; don't include empty attributes in the output timeml
+                continue
+            
+            # map tlink arg1/arg2 onto interval-type-specific attribute names
+            
+            if tag == 'tlink':
+                if k == 'arg1':
+                    if v[0] == 'e':
+                        k = 'eventInstanceID'
+                    elif v[0] == 't':
+                        k = 'timeID'
+                elif k == 'arg2':
+                    if v[0] == 'e':
+                        k = 'relatedToEventInstance'
+                    elif v[0] == 't':
+                        k = 'relatedToTime'
+            
+            
+            tagOutput += ' ' + k + '="' + str(v) + '"'
+        
+        tagOutput += ' />'
+        
+        print tagOutput
+
+    if format == 'csv':
+        
+        print '"' + '","'.join(browsed.keys()) + '"'
+        print '"' + '","'.join(map(str, browsed.values())) + '"'
+        
