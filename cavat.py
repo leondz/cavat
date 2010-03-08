@@ -754,17 +754,25 @@ while not finishedProcessing:
             
             # fetch document id
             browsedoc = None
+            docname = None
             
+            # populate both name and id fields
             if t.target.isdigit():
                 browsedoc = t.target
+                if not runQuery('SELECT docname FROM documents WHERE id = "%s"' % (t.target)):
+                    errorMsg('Document ID %s not found in corpus' % (t.target))
+                    continue
+                docname = db.cursor.fetchone()[0]
+                
             else:
+                docname = t.target
                 if not runQuery('SELECT id FROM documents WHERE docname = "%s"' % (t.target)):
                     errorMsg('Document %s not found in corpus' % (t.target))
                     continue
                 browsedoc = db.cursor.fetchone()[0]
                 
             # set value in cavatBrowse.doc for this corpus
-            print '# Now browsing document id %s in this corpus' % (browsedoc)
+            print '# Now browsing document id %s in this corpus (%s)' % (browsedoc, docname)
             cavatBrowse.doc[dbName] = int(browsedoc)
         
         elif t.tag:
@@ -772,28 +780,47 @@ while not finishedProcessing:
                 errorMsg('Unsupported tag: ' + t.tag)
                 continue
             
+            # if there's no selected document, abort
             if dbName not in cavatBrowse.doc.keys():
                 errorMsg('Please choose a document with "browse doc <doc_id|docname>" first.')
                 continue
-            
+
+            # work out the name of the id attribute and column for this tag/table
             idPrefix = cavatGrammar.idPrefixes[t.tag]
-            
-            if t.value.isdigit():
-                value = idPrefix + t.value
-            else:
-                value = t.value.lower()
-            
-            if not runQuery('SELECT * FROM %ss WHERE doc_id = %s AND %s = "%s"' % (t.tag,  cavatBrowse.doc[dbName], idPrefix + 'id',  value)):
-                continue
-            
-            results = list(db.cursor.fetchone())
-            fields = [name for (name, a, b, c, d, e, f) in db.cursor.description]
-            browsed = dict(zip(fields, results))
-            
-            if t.format:
-                outputBrowse(browsed,  t.tag,  t.format)
-            else:
-                outputBrowse(browsed,  t.tag)
+            idColumn = idPrefix + 'id'
+
+            if t.list: # are we just going to list all IDs?
+                if not runQuery('SELECT %s FROM %ss WHERE doc_id = %s ORDER BY %s' % (idColumn,  t.tag,  cavatBrowse.doc[dbName],  idColumn)):
+                    continue
+                
+                results = list(db.cursor.fetchall())
+                for result in results:
+                    print t.tag.upper(), result[0]
+                
+                
+            elif t.value: # show detail for one specific tag
+                
+                # can reference tags by id or string id - e.g., <signal sid="s1"> can be viewed with browse signal 1 or browse signal s1
+                if t.value.isdigit():
+                    value = idPrefix + t.value
+                else:
+                    value = t.value.lower()
+                
+                # get all fields for the appropriate tag
+                if not runQuery('SELECT * FROM %ss WHERE doc_id = %s AND %s = "%s"' % (t.tag,  cavatBrowse.doc[dbName], idColumn,  value)):
+                    continue
+                
+                # get a list of column headings too
+                results = list(db.cursor.fetchone())
+                fields = [name for (name, a, b, c, d, e, f) in db.cursor.description]
+                # build a dict using column headings as keys
+                browsed = dict(zip(fields, results))
+                
+                # call method for output in cavatMessages
+                if t.format:
+                    outputBrowse(browsed,  t.tag,  t.format)
+                else:
+                    outputBrowse(browsed,  t.tag)
         
     else:
         errorMsg("Unsupported command; please enable debug ('debug on'), try again, and contact support with the output.")

@@ -161,8 +161,13 @@ cavatStmt << (
                     (
                     doc_.setResultsName("doc") + fileName.setResultsName("target") 
                     |
-                    tag.setResultsName("tag") + alphaNums_.setResultsName("value") + Optional(as_ + browseFormat.setResultsName("format"))
+                    tag.setResultsName("tag") + 
+                        (
+                        list_.setResultsName("list")
+                        |
+                        alphaNums_.setResultsName("value") + Optional(as_ + browseFormat.setResultsName("format"))
+                        )
                 )
-                ) + EOL
+            ) + EOL
 
 

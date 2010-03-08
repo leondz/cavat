@@ -148,6 +148,10 @@ def outputBrowse(browsed, tag, format = 'screen'):
             if v is None: # all columns will be returned from db; don't include empty attributes in the output timeml
                 continue
             
+            # skip doc_id meta-information
+            if k == 'doc_id':
+                continue
+            
             # map tlink arg1/arg2 onto interval-type-specific attribute names
             
             if tag == 'tlink':
