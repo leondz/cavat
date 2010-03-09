@@ -143,7 +143,7 @@ cavatStmt << (
                             
                             |
                             
-                            (
+                            Optional(
                                 in_ + 
                                 (
                                 OneOrMore(fileName).setResultsName("target")

@@ -679,7 +679,20 @@ while not finishedProcessing:
                 continue
             
             # build a list containing id(s) of documents to be processed
-            sourceList = t.target
+            if t.target:
+                sourceList = t.target
+                
+            else:
+                # do we have a browse context set?
+                if dbName not in cavatBrowse.doc.keys():
+                    
+                    errorMsg('Please specify document(s)')
+                    continue
+                    
+                else:
+                    sourceList = [str(cavatBrowse.doc[dbName])]
+
+            
             docList = []
             
             if sourceList[0].lower() == 'all':
