@@ -159,7 +159,12 @@ cavatStmt << (
             
                 browseToken.setResultsName("action") + 
                     (
-                    doc_.setResultsName("doc") + fileName.setResultsName("target") 
+                    doc_.setResultsName("doc") + 
+                        (
+                        list_.setResultsName("list")
+                        |
+                        fileName.setResultsName("target") 
+                        )
                     |
                     tag.setResultsName("tag") + 
                         (

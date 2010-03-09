@@ -765,6 +765,17 @@ while not finishedProcessing:
                 errorMsg('Please select a corpus with "corpus use" first; "corpus list" will show which corpora are available.')
                 continue
             
+            if t.list:
+                if not runQuery('SELECT id, docname FROM documents ORDER BY id ASC'):
+                    continue
+                
+
+                for doc_ in db.cursor.fetchall():
+                    print 'DOCUMENT',  str(doc_[0]).rjust(6), ' ', doc_[1]
+                
+                continue
+
+            
             # fetch document id
             browsedoc = None
             docname = None
