@@ -397,13 +397,10 @@ while not finishedProcessing:
             else:
                 dbName = dbPrefix
             
-            try:
-                db.changeDb(dbName)
-            except Exception,  e:
-                errorMsg("Corpus database change failed "+str(e))
+            if db.changeDb(dbName):
+                print "# Corpus database changed to " + t.database
                 continue
             
-            print "# Corpus database changed to " + t.database
             
         elif t.info:
             # show corpus info - select * from info, print

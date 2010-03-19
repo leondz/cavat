@@ -31,10 +31,10 @@ def changeDb(dbName):
         conn.select_db(dbName)
     except:
         errorMsg('Could not switch to database '+dbName)
-        return
+        return False
     
     cursor = conn.cursor()
-    return
+    return True
 
 
 def runQuery(sqlQuery,  failureMessage = 'Query failed.'):
