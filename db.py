@@ -13,7 +13,7 @@ def connect(host,  user,  passwd):
     
     # connect
     try:
-        conn = MySQLdb.connect (host,  user,  passwd)
+        conn = MySQLdb.connect (host,  user,  passwd,  reconnect=1)
     except Exception,  e:
         import sys
         sys.exit('Database connection failed - ' + str(e))
@@ -52,3 +52,8 @@ def runQuery(sqlQuery,  failureMessage = 'Query failed.'):
         return False
 
     return True
+
+def close():
+    cursor.close()
+    conn.close()
+    return

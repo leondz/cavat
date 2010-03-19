@@ -4,7 +4,7 @@ REQUIREMENTS:
 
 Global:
 	Python 2.6.4 - 2.6.x
-	MySQL Server 4.1+
+	MySQL Server 5.1+
 
 Python add-ons:
 	NLTK 2.0b2+

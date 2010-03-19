@@ -123,6 +123,7 @@ while not finishedProcessing:
             
         except EOFError:
             errorMsg('EOF',  True)
+            db.close()
             break
         
     else:
@@ -136,6 +137,7 @@ while not finishedProcessing:
 
     if input.lower() in ("x",  "q",  "exit",  "quit"):
         print "Thanks for using CAVaT."
+        db.close()
         break
 
 
@@ -527,10 +529,11 @@ while not finishedProcessing:
         except Exception:
             
             print '# Top level commands:'
-            print '#   corpus - For working with corpora and databases'
-            print '#   show - Report generation'
-            print '#   check - Run a corpus validation module'
-            print '#   debug - Toggle debug mode'
+            print '#   corpus   - For working with corpora and databases'
+            print '#   show     - Report generation'
+            print '#   check    - Run a corpus validation module'
+            print '#   debug    - Toggle debug mode'
+            print '#   exit     - Leave CAVaT'
             print '# Enter "help" followed by one of these to see the command syntax'
             continue
         
@@ -625,10 +628,10 @@ while not finishedProcessing:
             print '#   check tlink_loop in wsj_0136.tml'
             print '#   check tlink_loop in 5 6 7 8'
             
-            
             continue
             
-        
+        else:
+            print '# No further help is available on this topic.'
         
     elif t.action == 'check':
         
