@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+
+<TimeML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="http://timeml.org/timeMLdocs/TimeML_1.2.1.xsd">
+
+It <EVENT eid="e1">looped</EVENT> <SIGNAL sid="s1">before</SIGNAL> <EVENT eid="e2">looping</EVENT> and <EVENT eid="e3">looping</EVENT> <SIGNAL sid="s2">again</SIGNAL>.
+
+<MAKEINSTANCE eventID="e1" eiid="ei1" tense="PAST" aspect="PERFECTIVE" polarity="POS" pos="VERB" />
+<MAKEINSTANCE eventID="e2" eiid="ei2" tense="PAST" aspect="NONE" polarity="POS" pos="VERB" />
+<MAKEINSTANCE eventID="e3" eiid="ei3" tense="PAST" aspect="NONE" polarity="POS" pos="VERB" />
+
+<TLINK lid="l1" relType="BEFORE" eventInstanceID="ei1" relatedToEventInstance="ei2" signalID="s1" />
+<TLINK lid="l2" relType="BEFORE" eventInstanceID="ei2" relatedToEventInstance="ei3" />
+<TLINK lid="l3" relType="BEFORE" eventInstanceID="ei3" relatedToEventInstance="ei1" signalID="s2" />
+
+</TimeML>
+
