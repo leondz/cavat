@@ -15,6 +15,11 @@ class orphans(CavatModule):
     
     def checkDocument(self,  doc_id):
         
+        docName = self.startup(doc_id)
+        if not docName:
+            return False
+
+        
         orphans = set()
         
         # orphan cases:
@@ -53,7 +58,7 @@ class orphans(CavatModule):
         
         for timex3 in timex3s:
             if timex3[0] not in linkedIntervals:
-                orphans.add('TIMEX3 ' + str(timex3[0]) + ' not in any TLINK')
+                orphans.add('TIMEX3 ' + str(timex3[0]) + ' not in any link')
         
         
         # next, check for instances not in tlinks
@@ -65,7 +70,7 @@ class orphans(CavatModule):
             instances.add(instance_[0])
         
         for missing in instances.difference(linkedIntervals):
-            orphans.add('INSTANCE ' + str(missing) + ' not in any TLINK')
+            orphans.add('INSTANCE ' + str(missing) + ' not in any link')
         
         
         # then, find events that don't have any instances
@@ -109,6 +114,8 @@ class orphans(CavatModule):
         
         
         if len(orphans) > 0:
+
+            print "# Checking " + docName + ' (id ' + doc_id + ')'
             
             orphans = list(orphans)
             orphans.sort()
