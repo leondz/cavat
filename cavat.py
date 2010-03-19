@@ -341,8 +341,11 @@ while not finishedProcessing:
             
             unfilledTags = totalTags - filledTags
             
-            filledPct = "%0.1f" % (float(filledTags) * 100 / totalTags)
-            unfilledPct = "%0.1f" % (float(unfilledTags) * 100 / totalTags)
+            if totalTags == 0:
+                [unfilledPct,  filledPct] = ['N/A'] * 2
+            else:
+                filledPct = "%0.1f" % (float(filledTags) * 100 / totalTags)
+                unfilledPct = "%0.1f" % (float(unfilledTags) * 100 / totalTags)
             
             results.append(['State of ' + tag.capitalize() + ' ' + sqlFieldName + whereCaption,  'Count'])
             results.append([sqlFieldName + ' filled',  '(' + filledPct + '%)',  filledTags])
