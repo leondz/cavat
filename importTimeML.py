@@ -25,12 +25,13 @@ with warnings.catch_warnings():
     from nltk.stem import wordnet as wn
 import re
 
+import db
 
 class ImportTimeML:
 
     doc_id = None
-    conn = MySQLdb.connect (host = "localhost", user = "timebank", passwd = "timebank")
-    cursor = conn.cursor()
+    conn = None
+    cursor = None
     tlinkFieldMapping = {'eventInstanceID':'arg1',  'timeID':'arg1',  'relatedToEventInstance':'arg2',  'relatedToTime':'arg2'}
 
     tags = {}
@@ -132,6 +133,10 @@ class ImportTimeML:
 
     def importCorpusToDb(self,  directory,  dbName):
         # global vars
+        
+        if not self.conn:
+            self.conn = db.conn
+            self.cursor = db.cursor
 
 
         print >> sys.stderr,  '==============================================================='
@@ -300,6 +305,9 @@ class ImportTimeML:
 if __name__ == '__main__':
     
     i = ImportTimeML()
+    i.conn = MySQLdb.connect (host = "localhost", user = "timebank", passwd = "timebank")
+    i.cursor = conn.cursor()
+    
     
     directory = sys.argv[1] + '/'
     dbName = 'timebank_' + sys.argv[2]
