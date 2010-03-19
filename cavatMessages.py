@@ -52,8 +52,8 @@ def outputResults(results,  reportType,  format = 'screen'):
         header = map(str,  header)
         header = map(latexSafe,  header)
         
-        caption = reportType.capitalize() + ' of ' + header[0]
-        label = 'tab:' + '-'.join(header).replace( ' ',  '') + '-' + reportType
+        caption = reportType.capitalize() + ' of ' + header[0].replace(' "',  ' ``')
+        label = 'tab:' + '-'.join(header).replace(' ',  '').replace('"',  '') + '-' + reportType
         
         print "\\begin{table}"
         print "\\caption{" + caption + "}"

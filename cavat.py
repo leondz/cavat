@@ -168,6 +168,7 @@ while not finishedProcessing:
         sqlCount = False
         sqlField = ''               # this string holds the field specification used in the SQL query (e.g. COUNT(*), reltype)
         sqlFieldName = ''       # this string holds the name of the field in the database, provided in the CAVaT query (e.g. reltype)
+        sqlFieldPrint = ''          # this is the way that the field is referred to in output
         sqlTable = ''
         sqlOrder = ''
         sqlDistinct = ''
@@ -207,6 +208,7 @@ while not finishedProcessing:
             except:
                 sqlFieldName = ''
             
+            sqlFieldPrint = sqlFieldName.lower()
             
             # check for queries on events that use eventinstance attributes
             if tag == 'event' and t.result.property in cavatGrammar.instanceFields.split(' '):
@@ -221,6 +223,7 @@ while not finishedProcessing:
                 sqlWheres.append('t.doc_id = s.doc_id')
                 sqlWheres.append('t.signalID = s.sid')
                 sqlFieldName = 's.text'
+                sqlFieldPrint = 'signal text'
                 dualTable_ts = True
             
             
@@ -347,7 +350,7 @@ while not finishedProcessing:
                 filledPct = "%0.1f" % (float(filledTags) * 100 / totalTags)
                 unfilledPct = "%0.1f" % (float(unfilledTags) * 100 / totalTags)
             
-            results.append(['State of ' + tag.capitalize() + ' ' + sqlFieldName + whereCaption,  'Count'])
+            results.append(['State of ' + tag.upper() + ' ' + sqlFieldName + whereCaption,  'Count'])
             results.append([sqlFieldName + ' filled',  '(' + filledPct + '%)',  filledTags])
             results.append([sqlFieldName + ' unfilled',  '(' + unfilledPct + '%)',  unfilledTags])
             
@@ -373,10 +376,10 @@ while not finishedProcessing:
             results = list(db.cursor.fetchall())
             
             if t.report == 'distribution':
-                results.insert(0,  [tag.capitalize() + ' ' + sqlFieldName + whereCaption,  'Frequency',  'Proportion'])
+                results.insert(0,  [tag.upper() + ' ' + sqlFieldPrint + whereCaption,  'Frequency',  'Proportion'])
                 results.append(['Total',  totalRecords])
             elif t.report == 'list':
-                results.insert(0,  [tag.capitalize() + ' ' + sqlFieldName + whereCaption])
+                results.insert(0,  [tag.upper() + ' ' + sqlFieldPrint + whereCaption])
         
         # detach result-printing from result-gathering, so that we can print results regardless of where the data come from (e.g. sqlQuery, manual calculations)
         # output results as a list - switch this depending on output request (tsv, csv, latex would be handy - latex with headers bold, first column left aligned all others right)
