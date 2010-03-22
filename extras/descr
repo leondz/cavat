@@ -1,0 +1,1 @@
+test_corpus: contains tests for tlink_loop and consistent; files test__*.tml contain describe A r1 B / B r2 C / A r3 C for all r1/r2/r3

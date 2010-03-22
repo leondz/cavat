@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+
+<TimeML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="http://timeml.org/timeMLdocs/TimeML_1.2.1.xsd">
+
+<EVENT eid="e1">Event A</EVENT>, <EVENT eid="e2">Event B</EVENT>, and <EVENT eid="e3">Event C</EVENT>.
+
+<MAKEINSTANCE eventID="e1" eiid="ei1" />
+<MAKEINSTANCE eventID="e2" eiid="ei2" />
+<MAKEINSTANCE eventID="e3" eiid="ei3" />
+
+<TLINK lid="l1" eventInstanceID="ei1" relatedToEventInstance="ei2" relType="BEGINS " />
+<TLINK lid="l2" eventInstanceID="ei2" relatedToEventInstance="ei3" relType="IS_INCLUDED" />
+<TLINK lid="l3" eventInstanceID="ei1" relatedToEventInstance="ei3" relType="BEGINS" />
+
+</TimeML>
