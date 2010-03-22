@@ -33,29 +33,14 @@ class split_graph(CavatModule):
         
         return -entropy
 
-    def checkDocument(self,  doc_id):
 
-        self.superVerbose = cavatDebug.debug
+    def findSplitGraphs(self,  tlinks):
         
-        docName = self.startup(doc_id)
-        if not docName:
-            return False
+        # does the main body of work. takes a list of tlink argument pairs; [ [arg1, arg2], [arg1, arg2], ... ]
         
-        if self.superVerbose:
-            print '# Checking %s (id %s)' % (docName, doc_id)
-
-        # maintain a list of sets. each set represents a pile of related nodes (e.g. a linked part of the document's temporal graph).
-        # when we add a tlink, check for either of its arguments' presence in any pile of other nodes; 
-        # - if we find that it can be attached, add the other argument to that set, and then search all the other piles using the other end of the tlink
-        # -   if we find a match, merge the two piles
-        # when we've added all the tlinks, we will have a list containing dicts of separate subgraphs. Look up TLINK IDs at this point for output.
         
+        # begin with an empty list of graphs
         graphs = []
-        
-        if not runQuery('SELECT arg1, arg2 FROM tlinks WHERE doc_id = ' + doc_id):
-            return 
-        
-        tlinks = db.cursor.fetchall()
         
         for tlink in tlinks:
             
@@ -136,6 +121,32 @@ class split_graph(CavatModule):
                 newgraph = set([tlink[0],  tlink[1]])
                 graphs.append(newgraph)
         
+        return graphs
+
+    def checkDocument(self,  doc_id):
+
+        self.superVerbose = cavatDebug.debug
+        
+        docName = self.startup(doc_id)
+        if not docName:
+            return False
+        
+        if self.superVerbose:
+            print '# Checking %s (id %s)' % (docName, doc_id)
+
+        # maintain a list of sets. each set represents a pile of related nodes (e.g. a linked part of the document's temporal graph).
+        # when we add a tlink, check for either of its arguments' presence in any pile of other nodes; 
+        # - if we find that it can be attached, add the other argument to that set, and then search all the other piles using the other end of the tlink
+        # -   if we find a match, merge the two piles
+        # when we've added all the tlinks, we will have a list containing dicts of separate subgraphs. Look up TLINK IDs at this point for output.
+        
+        if not runQuery('SELECT arg1, arg2 FROM tlinks WHERE doc_id = ' + doc_id):
+            return 
+        
+        tlinks = db.cursor.fetchall()
+        
+        graphs = self.findSplitGraphs(tlinks)
+        
         numSubgraphs = len(graphs)
         
         if self.superVerbose:
@@ -195,4 +206,4 @@ class split_graph(CavatModule):
             
         else:
             return True
-        
+
