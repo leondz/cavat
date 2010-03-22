@@ -452,23 +452,21 @@ while not finishedProcessing:
             else:
                 targetDb = dbPrefix + '_' + t.database
             
-            
+            e = None
             try:
                 i.importCorpusToDb(t.directory,  targetDb)
             except Exception,  e:
                 errorMsg(str(e))
-                
-                if not cavatDebug.debug:
-                    # restore stdout
-                    sys.stdout = sys.__stdout__
 
-                continue
-
+            # cleanup
             if not cavatDebug.debug:
                 # restore stdout
                     sys.stdout = sys.__stdout__
             
-            print '# Corpus ' + t.database + ' imported. Enter "corpus use ' + t.database + '" to start using it.'
+            db.changeDb(dbName) # import will have mangled this; reset it.
+            
+            if not e:
+                print '# Corpus ' + t.database + ' imported. Enter "corpus use ' + t.database + '" to start using it.'
 
         
         elif t.verify:
