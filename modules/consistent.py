@@ -34,6 +34,8 @@ class consistent(CavatModule):
     database = {} # hash keyed by arg1.arg2, for rapid lookup; value is '<' or '='. intervals boundeb by e.g. ei122_1 - ei122_2
     agenda = {}
     
+    failReason = ''
+    
     
     def addToAgenda(self,  fact):
         
@@ -47,7 +49,7 @@ class consistent(CavatModule):
         if fact[0] in self.database.keys():
             if self.database[fact[0]] != fact[1]:
                 if self.superVerbose:
-                    print "! Already asserted on database that relation is ",  self.database[fact[0]]
+                    self.failReason = "Already asserted on database that relation is " + self.database[fact[0]]
                 return False
             else:
                 return True
@@ -55,7 +57,7 @@ class consistent(CavatModule):
         if fact[0] in self.agenda.keys():
             if self.agenda[fact[0]] != fact[1]:
                 if self.superVerbose:
-                    print "! Already asserted on agenda that relation is ",  self.agenda[fact[0]]
+                    self.failReason = "Already asserted on agenda that relation is " + self.agenda[fact[0]]
                 return False
             else:
                 return True
@@ -63,7 +65,7 @@ class consistent(CavatModule):
         if reversed in self.agenda.keys():
             if self.agenda[reversed] == fact[1] and fact[1] != '=':
                 if self.superVerbose:
-                    print '! Relation already exists on agenda in opposite direction, ' + reversed + ' ' + self.agenda[reversed]
+                    self.failReason = 'Relation already exists on agenda in opposite direction, ' + reversed + ' ' + self.agenda[reversed]
                 return False
             else:
                 return True
@@ -71,7 +73,7 @@ class consistent(CavatModule):
         if reversed in self.database.keys():
             if self.database[reversed] == fact[1] and fact[1] != '=':
                 if self.superVerbose:
-                    print '! Relation already exists on database in opposite direction, ' + reversed + ' ' + self.database[reversed]
+                    self.failReason = 'Relation already exists on database in opposite direction, ' + reversed + ' ' + self.database[reversed]
                 return False
             else:
                 return True
@@ -82,44 +84,10 @@ class consistent(CavatModule):
         return True
 
 
-    def uniq_unordered(self,  seq):
-        # Not order preserving 
-        keys = {} 
-        for e in seq: 
-            keys[e] = 1 
-        return keys.keys()    
-    
-    
-    def checkDocument(self,  doc_id):
-        
-        docName = self.startup(doc_id)
-        if not docName:
-            return False        
-        
-        self.database = {}
-        self.agenda = {}
-    
-    # use an agenda-based closure algorithm.
-    #   - find all intervals referenced by tlinks
-    #   - split these into a start and end, and for each interval, add interval_start < interval_end to the database (which assumes we have only annotated proper intervals).
-    #   - for each tlink, add axioms about the points that they link to the agenda
-    #   - perform agenda based closure; before any agenda addition, check that the rule being added does not conflict with other rules. 
-    #     a conflict is when we assign a new value for a pair that is already present; e.g., a<b conflicts with b=a, or b<a, or a=b
-    #   - if we ever find a conflict, then the graph is inconsistent.
-    #   - if we empty the agenda, the graph is consistent.
-
-    
-        if not runQuery('SELECT DISTINCT arg1 FROM tlinks WHERE doc_id = ' + doc_id):
-            return
-        
-        intervals = db.cursor.fetchall()
-        
-        if not runQuery('SELECT DISTINCT arg2 FROM tlinks WHERE doc_id = ' + doc_id):
-            return
-        
-        intervals = self.uniq_unordered(db.cursor.fetchall() + intervals)
-        
-
+    def consistencyCheck(self,  intervals, tlinks):
+        # arguments are:
+        # - intervals, a set of names of intervals present in the graph;
+        # - tlinks, a tuple of 4-tuples, where each 4-tuple represents a tlink, as 4 strings - arg1, reltype, arg2, id
         
         # populate database with before relation that establishes proper intervals
         for interval in intervals:
@@ -131,12 +99,6 @@ class consistent(CavatModule):
                 print "# Adding " + assertionLabel + ' <'
        
         # add tlinks to agenda
-        
-        if not runQuery('SELECT arg1, reltype, arg2, lid FROM tlinks WHERE doc_id = ' + doc_id):
-            return
-        
-        tlinks = db.cursor.fetchall()
-        
         for tlink in tlinks:
             
             if self.superVerbose:
@@ -158,10 +120,8 @@ class consistent(CavatModule):
                     
                 else:
                     args = k.split('.')
-                    if not cavatDebug.debug:
-                        print "# Checking " + docName + ' (id ' + doc_id + ')'
                     
-                    print "! Inconsistent initial TLINKs - could not assert (%s %s %s)" % (args[0],  v,  args[1])
+                    self.failReason = "Inconsistent initial TLINKs - could not assert (%s %s %s)" % (args[0],  v,  args[1])
                     return False
         
         
@@ -179,15 +139,15 @@ class consistent(CavatModule):
             if self.superVerbose:
                 print '-- database',  self.database
                 print '-- agenda',  self.agenda
-            (key,  value) = self.agenda.popitem()
+            (agendakey,  value) = self.agenda.popitem()
             
             if self.superVerbose:
-                print 'processing',  key,  value
+                print 'processing',  agendakey,  value
             
             for dbkey in self.database.keys():
                 
                 # reset these for each calculation
-                [p1,  p2] = key.split('.')
+                [p1,  p2] = agendakey.split('.')
                 r1 = value
                 
                 [p3,  p4] = dbkey.split('.')
@@ -224,21 +184,66 @@ class consistent(CavatModule):
                 
                 if not self.addToAgenda([propositionKey,  r3]):
                     args = propositionKey.split('.')
-                    
-                    # only print doc name if it's not already there
-                    if not cavatDebug.debug:
-                        print "# Checking " + docName + ' (id ' + doc_id + ')'
 
-                    print "! Inconsistent closure - could not assert (%s %s %s)" % (args[0],  r3,  args[1])
+                    self.failReason = "Inconsistent closure - could not assert (%s %s %s)" % (args[0],  r3,  args[1])
                     return False
 
                 else:
-                    self.database[key] = value
+                    self.database[agendakey] = value
 
+        return False
+    
+    def checkDocument(self,  doc_id):
         
-        if cavatDebug.debug:
-            print 'Consistent'
-        if self.superVerbose:
-            print self.database
+        docName = self.startup(doc_id)
+        if not docName:
+            return False        
         
-        return True
+        self.database = {}
+        self.agenda = {}
+        
+    # use an agenda-based closure algorithm.
+    #   - find all intervals referenced by tlinks
+    #   - split these into a start and end, and for each interval, add interval_start < interval_end to the database (which assumes we have only annotated proper intervals).
+    #   - for each tlink, add axioms about the points that they link to the agenda
+    #   - perform agenda based closure; before any agenda addition, check that the rule being added does not conflict with other rules. 
+    #     a conflict is when we assign a new value for a pair that is already present; e.g., a<b conflicts with b=a, or b<a, or a=b
+    #   - if we ever find a conflict, then the graph is inconsistent.
+    #   - if we empty the agenda, the graph is consistent.
+
+    
+        if not runQuery('SELECT DISTINCT arg1 FROM tlinks WHERE doc_id = ' + doc_id):
+            return
+        
+        intervals = set(db.cursor.fetchall())
+        
+        if not runQuery('SELECT DISTINCT arg2 FROM tlinks WHERE doc_id = ' + doc_id):
+            return
+        
+        intervals = intervals.union(set(db.cursor.fetchall()))
+        
+        # fetch tlinks
+        if not runQuery('SELECT arg1, reltype, arg2, lid FROM tlinks WHERE doc_id = ' + doc_id):
+            return
+        
+        tlinks = db.cursor.fetchall()
+        
+        result = self.consistencyCheck(intervals,  tlinks)
+        
+        if result:
+            if cavatDebug.debug:
+                print 'Consistent'
+                
+            if self.superVerbose:
+                print self.database
+                
+            return True
+            
+        else:
+            
+            # only print doc name if it's not already there
+            if not cavatDebug.debug:
+                print "# Checking " + docName + ' (id ' + doc_id + ')'
+                
+            print '! ' + self.failReason
+            return False
