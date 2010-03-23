@@ -191,7 +191,7 @@ class consistent(CavatModule):
                 else:
                     self.database[agendakey] = value
 
-        return False
+        return True
     
     def checkDocument(self,  doc_id):
         
