@@ -1,26 +1,36 @@
 #!/usr/bin/python 
 
-import readline
-from pyparsing import ParseException
+# basic requirements
 import os
 import sys
 import string
+
+# CAVaT config
+import ConfigParser
+
+# for database
+import db
+from db import runQuery
 import warnings
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
     import MySQLdb
-import atexit
-import ConfigParser
 
+# for processing CAVaT commands
+from pyparsing import ParseException
 from cavatGrammar import cavatStmt,  validTags, numericFields
 import cavatGrammar
-
-from cavatMessages import *
-import cavatDebug
 import cavatBrowse
 
-import db
-from db import runQuery
+# for interactive prompt
+import readline
+import atexit
+
+# for output
+from cavatMessages import *
+import cavatDebug
+
+
 
 def buildSqlWhereClause(wheres):
     if len(sqlWheres) > 0:
