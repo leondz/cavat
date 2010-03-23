@@ -15,8 +15,9 @@ class split_graph(CavatModule):
     _maxVersion = 0.999
     
     superVerbose = cavatDebug.debug
-    printGraphs = True
-    extraStats = True
+    printGraphs = False
+    extraStats = False
+    listMembers = True
 
 
     def entropy(self,  stacks):
@@ -201,6 +202,10 @@ class split_graph(CavatModule):
                 
                 for size,  freq in sorted(count.iteritems()):
                     print ' ' + str(size).rjust(4) + ' nodes: ('+ str(freq).rjust(2)+') ' + ('.' * freq)
+            
+            if self.listMembers:
+                for graph in graphs:
+                    print sorted(list(graph))
             
             return False
             
