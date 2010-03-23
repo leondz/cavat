@@ -87,11 +87,14 @@ class consistent(CavatModule):
     def consistencyCheck(self,  intervals, tlinks):
         # arguments are:
         # - intervals, a set of names of intervals present in the graph;
-        # - tlinks, a tuple of 4-tuples, where each 4-tuple represents a tlink, as 4 strings - arg1, reltype, arg2, id
+        # - tlinks, a set of 4-tuples, where each 4-tuple represents a tlink, as 4 strings - arg1, reltype, arg2, id
+        # provide tuples for fastest processing, though any set type will work (e.g. tuple(intervals) tuple(tlinks) is superior)
+        
+        self.database = {}
+        self.agenda = {}
         
         # populate database with before relation that establishes proper intervals
-        for interval in intervals:
-            intervalName = interval[0]
+        for intervalName in intervals:
             assertionLabel = intervalName + '_1.' + intervalName + '_2'
             self.database[assertionLabel] = '<'
             
@@ -199,9 +202,6 @@ class consistent(CavatModule):
         if not docName:
             return False        
         
-        self.database = {}
-        self.agenda = {}
-        
     # use an agenda-based closure algorithm.
     #   - find all intervals referenced by tlinks
     #   - split these into a start and end, and for each interval, add interval_start < interval_end to the database (which assumes we have only annotated proper intervals).
@@ -221,6 +221,13 @@ class consistent(CavatModule):
             return
         
         intervals = intervals.union(set(db.cursor.fetchall()))
+        
+        # move db result from list of tuples to list of strings
+        intervals_ = []
+        for interval in intervals:
+            intervals_.append(interval[0])
+        intervals = set(intervals_)
+        
         
         # fetch tlinks
         if not runQuery('SELECT arg1, reltype, arg2, lid FROM tlinks WHERE doc_id = ' + doc_id):
