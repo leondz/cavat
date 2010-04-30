@@ -31,6 +31,8 @@ from cavatMessages import *
 import cavatDebug
 
 
+cavatVersion = 0.2
+
 
 def buildSqlWhereClause(wheres):
     if len(sqlWheres) > 0:
@@ -38,8 +40,6 @@ def buildSqlWhereClause(wheres):
     else:
         return ''
     
-
-cavatVersion = 0.1
 
 
 # process command-line arguments

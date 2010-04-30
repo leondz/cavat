@@ -135,3 +135,39 @@ CREATE TABLE IF NOT EXISTS `tlinks` (
   UNIQUE KEY `doc_id` (`doc_id`,`lid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `slinks`
+--
+
+CREATE TABLE IF NOT EXISTS `alinks` (
+  `doc_id` int(10) unsigned NOT NULL,
+  `lid` varchar(100) NOT NULL,
+  `origin` text,
+  `eventInstanceID` varchar(100) NOT NULL,
+  `subordinatedEventInstance` varchar(100) NOT NULL,
+  `signalID` varchar(100) default NULL,
+  `arg1` varchar(100) NOT NULL,
+  `relType` enum('BEFORE','AFTER','INCLUDES','IS_INCLUDED','DURING','SIMULTANEOUS','IAFTER','IBEFORE','IDENTITY','BEGINS','ENDS','BEGUN_BY','ENDED_BY','DURING_INV') NOT NULL,
+  `arg2` varchar(100) NOT NULL,
+  UNIQUE KEY `doc_id` (`doc_id`,`lid`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `alinks`
+--
+
+CREATE TABLE IF NOT EXISTS `tlinks` (
+  `doc_id` int(10) unsigned NOT NULL,
+  `lid` varchar(100) NOT NULL,
+  `origin` text,
+  `signalID` varchar(100) default NULL,
+  `arg1` varchar(100) NOT NULL,
+  `relType` enum('BEFORE','AFTER','INCLUDES','IS_INCLUDED','DURING','SIMULTANEOUS','IAFTER','IBEFORE','IDENTITY','BEGINS','ENDS','BEGUN_BY','ENDED_BY','DURING_INV') NOT NULL,
+  `arg2` varchar(100) NOT NULL,
+  UNIQUE KEY `doc_id` (`doc_id`,`lid`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+

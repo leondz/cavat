@@ -1,6 +1,6 @@
 [cavat]
 dbhost=localhost
-dbuser=cavat
-dbpass=cavat
-dbprefix=cavat
-dbname=cavat_timebank
+dbuser=timebank
+dbpass=timebank
+dbprefix=timebank
+dbname=timebank
