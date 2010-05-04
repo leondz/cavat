@@ -49,6 +49,8 @@ class ImportTimeML:
         global elementID
         elementID = None
         
+        
+        # set elementID for tags that wrap around text, to capture the text
         if name == 'TIMEX3':
             elementID = attrs['tid']
 
@@ -92,7 +94,7 @@ class ImportTimeML:
         pass
 
 
-    def insertNodes(self,  nodes,  attribs,  table):
+    def insertNodes(self,  nodes,  attribs,  table,  tlinks=False):
 
         for node in nodes:
             
@@ -110,7 +112,7 @@ class ImportTimeML:
                     nodeData['value'] = node.getAttribute['valueFromFunction']
 
             # different attribute names are used for timexs and events, occuring as arg1 and arg2 of a TLINK. let's call them all arg1 & arg2
-            if 'lid' in attribs:
+            if tlinks:
                 for tlinkAttrib in self.tlinkFieldMapping.keys():
                     if node.hasAttribute(tlinkAttrib):
                         nodeData[self.tlinkFieldMapping[tlinkAttrib]] = node.getAttribute(tlinkAttrib)
@@ -212,18 +214,24 @@ class ImportTimeML:
             timexNodes = timemldoc.getElementsByTagName('TIMEX3')
             signalNodes = timemldoc.getElementsByTagName('SIGNAL')
             tlinkNodes = timemldoc.getElementsByTagName('TLINK')
+            slinkNodes = timemldoc.getElementsByTagName('SLINK')
+            alinkNodes = timemldoc.getElementsByTagName('ALINK')
 
             eventAttribs = ['eid',  'class']
             makeInstanceAttribs = ['eiid',  'eventID',  'signalID',  'pos',  'tense',  'aspect',  'cardinality',  'polarity',  'modality']
             timexAttribs = ['tid', 'type',  'functionInDocument',  'beginPoint',  'endPoint',  'quant',  'freq',  'temporalFunction',  'value',  'mod',  'anchorTimeID']
             signalAttribs = ['sid']
             tlinkAttribs = ['lid',  'origin',  'signalID',  'relType']
+            slinkAttribs = ['lid',  'origin',  'signalID',  'relType',  'eventInstanceID',  'subordinatedEventInstance']
+            alinkAttribs = ['lid',  'origin',  'signalID',  'relType',  'eventInstanceID',  'relatedToEventInstance']
 
             self.insertNodes(eventNodes,  eventAttribs,  'events')
             self.insertNodes(makeInstanceNodes,  makeInstanceAttribs,  'instances')
             self.insertNodes(timexNodes,  timexAttribs,  'timex3s')
             self.insertNodes(signalNodes,  signalAttribs,  'signals')
-            self.insertNodes(tlinkNodes,  tlinkAttribs,  'tlinks')
+            self.insertNodes(tlinkNodes,  tlinkAttribs,  'tlinks',  True)
+            self.insertNodes(slinkNodes,  slinkAttribs,  'slinks')
+            self.insertNodes(alinkNodes,  alinkAttribs,  'alinks')
 
 
             # get position data
@@ -242,6 +250,8 @@ class ImportTimeML:
 
             parser.Parse(xmlData)
 
+            # add text data for tags that contain text (event, timex, signal)
+        
             for tag in self.tags:
                 if tag[0] == 's':
                     table = 'signals'
@@ -270,7 +280,7 @@ class ImportTimeML:
                     idColumn = 'tid'
                     
                 else:
-                    # unknown element type
+                    # unknown element type - ignore
                     continue
             
                 self.cursor.execute('UPDATE %s SET position = %s, sentence = %s, inSentence = %s WHERE %s = "%s" AND doc_id = %d' % (table,  self.tags[tag][1],  self.tags[tag][2],  self.tags[tag][3],   idColumn,  tag,  self.doc_id))

@@ -3,8 +3,9 @@ from pyparsing import Forward, Keyword, Word, oneOf, alphas, alphanums,  nums,  
 
 
 # TimeML information
-validTags = ['event',  'tlink',  'instance',  'signal',  'timex3']
-numericFields = ['events.doc_id',  'events.position',  'events.sentence',  'instances.doc_id', 'signals.doc_id',  'signals.position',  'signals.sentence',  'timex3s.doc_id',  'timex3s.position',  'timex3s.sentence',  'tlinks.doc_id']
+validTags = ['event',  'tlink',  'instance',  'signal',  'timex3',  'slink',  'alink']
+# - holds which fields are numeric and should be used as sorting keys on some reports
+numericFields = ['events.doc_id',  'events.position',  'events.sentence',  'instances.doc_id', 'signals.doc_id',  'signals.position',  'signals.sentence',  'timex3s.doc_id',  'timex3s.position',  'timex3s.sentence',  'tlinks.doc_id',  'slinks.doc_id',  'alinks.doc_id']
 
 # field names
 eventFields = "doc_id eid class text lemma position sentence eventid signalid pos tense aspect cardinality polarity modality"
@@ -12,8 +13,10 @@ instanceFields = "doc_id eiid eventid signalid pos tense aspect cardinality pola
 signalFields = "doc_id sid text position sentence"
 timex3Fields = "doc_id tid type functionindocument beginpoint endpoint quant freq temporalfunction value mod anchortimeid text position sentence"
 tlinkFields = "doc_id lid origin signalid arg1 reltype arg2 signaltext"
+slinkFields = "doc_id lid origin signalid eventInstanceID reltype subordinatedEventInstance signaltext"
+alinkFields = "doc_id lid origin signalid eventInstanceID reltype relatedToEventInstance signaltext"
 
-idPrefixes = {'event': 'e',  'instance':'ei',  'signal':'s',  'timex3':'t',  'tlink':'l'}
+idPrefixes = {'event': 'e',  'instance':'ei',  'signal':'s',  'timex3':'t',  'tlink':'l',  'slink':'l',  'alink':'l'}
 
 # the top-level command
 cavatStmt = Forward()
@@ -53,15 +56,17 @@ instanceProperty = Keyword("instance", caseless = True).setResultsName("tag") + 
 signalProperty = Keyword("signal",  caseless = True).setResultsName("tag") + oneOf(signalFields,  caseless = True).setResultsName("property")
 timex3Property = Keyword("timex3",  caseless = True).setResultsName("tag") + oneOf(timex3Fields,  caseless = True).setResultsName("property")
 tlinkProperty = Keyword("tlink",  caseless = True).setResultsName("tag") + oneOf(tlinkFields,  caseless = True).setResultsName("property")
+slinkProperty = Keyword("slink",  caseless = True).setResultsName("tag") + oneOf(slinkFields,  caseless = True).setResultsName("property")
+alinkProperty = Keyword("alink",  caseless = True).setResultsName("tag") + oneOf(alinkFields,  caseless = True).setResultsName("property")
 
 
 # field name property, build from field specifiers
-fieldName = Group(eventProperty | instanceProperty | signalProperty | timex3Property | tlinkProperty)
+fieldName = Group(eventProperty | instanceProperty | signalProperty | timex3Property | tlinkProperty | slinkProperty | alinkProperty)
 
 # basic where clause
 simpleWhereClause = (
             where_  
-            + oneOf(' '.join([eventFields,  instanceFields,  signalFields,  timex3Fields,  tlinkFields])).setResultsName("conditionField")
+            + oneOf(' '.join([eventFields,  instanceFields,  signalFields,  timex3Fields,  tlinkFields,  slinkFields,  alinkFields])).setResultsName("conditionField")
             + (
                 is_ + Optional(not_.setResultsName("not_")) + alphaNums_.setResultsName("conditionValue")
                 |

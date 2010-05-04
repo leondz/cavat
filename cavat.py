@@ -411,6 +411,8 @@ while not finishedProcessing:
             
             if db.changeDb(dbName):
                 print "# Corpus database changed to " + t.database
+                # do a version check here
+                
                 continue
             
             
@@ -452,7 +454,6 @@ while not finishedProcessing:
             import importTimeML
             i = importTimeML.ImportTimeML()
             
-            
             if not cavatDebug.debug:
                 # don't care about seeing each file processed
                 sys.stdout = open('/dev/null',  'w')
@@ -465,6 +466,7 @@ while not finishedProcessing:
             e = None
             try:
                 i.importCorpusToDb(t.directory,  targetDb)
+                db.cursor.execute('INSERT INTO info(`key`, `data`) VALUES("cavat_version", ' + str(cavatVersion) + ')')
             except Exception,  e:
                 errorMsg(str(e))
 
