@@ -230,13 +230,31 @@ while not finishedProcessing:
                 sqlTable = tag + 's'
             
             dualTable_ts = False
-            if tag=='tlink' and t.result.property == 'signaltext':
-                sqlTable = 'tlinks t, signals s'
-                sqlWheres.append('t.doc_id = s.doc_id')
-                sqlWheres.append('t.signalID = s.sid')
+            dualTable_ss = False
+            dualTable_as = False
+            
+            if t.result.property == 'signaltext': # bring in signal table and signal text field
+                sqlTable = 'signals s, '
                 sqlFieldName = 's.text'
                 sqlFieldPrint = 'signal text'
-                dualTable_ts = True
+                
+                if tag == 'tlink':
+                    sqlTable += 'tlinks t'
+                    sqlWheres.append('t.doc_id = s.doc_id')
+                    sqlWheres.append('t.signalID = s.sid')
+                    dualTable_ts = True
+                    
+                if tag == 'slink':
+                    sqlTable += 'slinks sl'
+                    sqlWheres.append('sl.doc_id = s.doc_id')
+                    sqlWheres.append('sl.signalID = s.sid')
+                    dualTable_ss = True
+                    
+                if tag == 'alink':
+                    sqlTable += 'alinks a'
+                    sqlWheres.append('a.doc_id = s.doc_id')
+                    sqlWheres.append('a.signalID = s.sid')
+                    dualTable_as = True
             
             
             
@@ -277,7 +295,7 @@ while not finishedProcessing:
                 conditionFieldName = 'signal text'
                 
                 # otherwise, this will already be included
-                if not dualTable_ts:
+                if not dualTable_ts or dualTable_ss or dualTable_as:
                     sqlTable = 'tlinks t, signals s'
                     sqlWheres.append('t.doc_id = s.doc_id')
                     sqlWheres.append('t.signalID = s.sid')
