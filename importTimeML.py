@@ -42,7 +42,7 @@ class ImportTimeML:
     posInSentence = 0
     bodyText = ''
 
-    sentenceBound = re.compile(r'\.[\s\n\r]')
+    sentenceBound = re.compile(r'\.[\s]',  re.MULTILINE)
 
     def startElement(self,  name,  attrs):
 
@@ -78,13 +78,15 @@ class ImportTimeML:
         
         
         self.bodyText += data
-        newWords = len(data.split())
-        self.wordOffset += newWords
-        self.sentenceOffset += len(re.findall(self.sentenceBound, data))
+        newWords = len(data.split()) # number of tokens in this chunk of text
+        self.wordOffset += newWords # advance word offset
+#        print '|'+data+'|'
+        self.sentenceOffset += len(self.sentenceBound.findall(data+' ')) # count sentences in chunk of text and advance sentence offset; expat rtrims, so add a space for detection of final full stops.
+#        print self.sentenceOffset,  'sentences'
         
         sentences = re.split(self.sentenceBound,  data)
         if len(sentences) > 1:
-            self.posInSentence = len(sentences.pop().split())
+            self.posInSentence = len(sentences.pop().split()) # only count word offset in latest sentence
         else:
             self.posInSentence  += newWords
         
@@ -200,6 +202,16 @@ class ImportTimeML:
 
             print fileName,  'as',  self.doc_id
 
+            # break into sentences
+            timeMlFile = open(directory+fileName)
+            self.bodyText = timeMlFile.read() # load file
+            self.bodyText = re.sub(r'<[^>]*?>', '', self.bodyText) # strip tags
+            self.bodyText = re.sub(r'[\n\r\t\s]+', ' ', self.bodyText) # collapse whitespace
+            timeMlFile.close()
+            
+            sentences = self.sentenceBound.split(self.bodyText)
+            for i,  sentence in enumerate(sentences):
+                self.cursor.execute('INSERT INTO sentences(doc_id, sentenceID, text) VALUES(%d, %d, "%s")' % (self.doc_id,  i,  MySQLdb.escape_string(sentence)))
 
             # get minidom data - element attribute cataloguing
 
@@ -288,6 +300,9 @@ class ImportTimeML:
             
             self.cursor.execute('UPDATE documents SET body = "%s" WHERE id = %d' % (MySQLdb.escape_string(self.bodyText), self.doc_id))
             
+            
+        
+        
 
         print 'Updating DB metadata'
 

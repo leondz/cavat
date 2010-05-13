@@ -168,3 +168,16 @@ CREATE TABLE IF NOT EXISTS `alinks` (
   UNIQUE KEY `doc_id` (`doc_id`,`lid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sentences`
+--
+
+CREATE TABLE IF NOT EXISTS `sentences` (
+  `doc_id` int(10) unsigned NOT NULL,
+  `sentenceID` int(10) unsigned NOT NULL,
+  `text` MEDIUMTEXT,
+  UNIQUE KEY `doc_id` (`doc_id`,`sentenceID`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+

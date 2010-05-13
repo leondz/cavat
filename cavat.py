@@ -883,7 +883,11 @@ while not finishedProcessing:
                     continue
                 
                 # get a list of column headings too
-                results = list(db.cursor.fetchone())
+                try:
+                    results = list(db.cursor.fetchone())
+                except:
+                    errorMsg('Element not found in this document')
+                    continue
                 fields = [name for (name, a, b, c, d, e, f) in db.cursor.description]
                 # build a dict using column headings as keys
                 browsed = dict(zip(fields, results))
