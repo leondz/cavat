@@ -23,8 +23,8 @@ class orphans(CavatModule):
         orphans = set()
         
         # orphan cases:
-        #  timex3 not in a tlink
-        #  instance not in a tlink
+        #  timex3 not in a link
+        #  instance not in a link
         #  event not got an instance
         #  instance not got an event
         #  signals not referenced by any tlink or instance
@@ -32,20 +32,15 @@ class orphans(CavatModule):
 
         # build a list of intervals already in tlinks
 
-        if not runQuery('SELECT DISTINCT arg1 FROM tlinks WHERE doc_id = ' + doc_id):
-            return
-        arg1s = list(db.cursor.fetchall())
-
-        if not runQuery('SELECT DISTINCT arg2 FROM tlinks WHERE doc_id = ' + doc_id):
-            return
-        arg2s = list(db.cursor.fetchall())
-        
         linkedIntervals = set()
         
-        for arg1 in arg1s:
-            linkedIntervals.add(arg1[0])
-        for arg2 in arg2s:
-            linkedIntervals.add(arg2[0])
+        queries = ['SELECT DISTINCT arg2 FROM tlinks WHERE doc_id = ',  'SELECT DISTINCT arg1 FROM tlinks WHERE doc_id = ',  'SELECT DISTINCT eventInstanceID FROM slinks WHERE doc_id = ',  'SELECT DISTINCT subordinatedEventInstance FROM slinks WHERE doc_id = ',  'SELECT DISTINCT eventInstanceID FROM alinks WHERE doc_id = ',  'SELECT DISTINCT relatedToEventInstance FROM alinks WHERE doc_id = ']
+        for query in queries:
+            if not runQuery(query + doc_id):
+                return
+            args = list(db.cursor.fetchall())
+            for arg in args:
+                linkedIntervals.add(arg[0])
 
 
 
