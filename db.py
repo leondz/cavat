@@ -6,6 +6,7 @@ import sys
 
 conn = None
 cursor = None
+version = None
 
 def connect(host,  user,  passwd):
     

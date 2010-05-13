@@ -32,7 +32,7 @@ import cavatDebug
 
 
 cavatVersion = 0.2
-
+db.version = cavatVersion
 
 def buildSqlWhereClause(wheres):
     if len(sqlWheres) > 0:
@@ -430,6 +430,20 @@ while not finishedProcessing:
             if db.changeDb(dbName):
                 print "# Corpus database changed to " + t.database
                 # do a version check here
+                
+                if not runQuery('SELECT data FROM info WHERE `key` = "cavat_version"'):
+                    continue
+                
+                try:
+                   dbVersion = float(db.cursor.fetchone()[0])
+                except:
+                    dbVersion = 0.0
+                
+                if dbVersion < db.version:
+                    errorMsg('Database was created with an earlier version of CAVaT, not all checks or queries may work. Re-import the corpus to upgrade this database.')
+                elif dbVersion > db.version:
+                    errorMsg('Database was created with a newer version of CAVaT, not all checks or queries may work.')
+                
                 
                 continue
             
