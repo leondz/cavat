@@ -41,12 +41,13 @@ conditionValue = Group(Word(nums) | QuotedString('"\''))
 state = oneOf("filled unfilled",  caseless = True)
 tlinkPositionedArg = oneOf("arg1 arg2 signal",  caseless = True)
 distanceUnits = oneOf("words sentences",  caseless = True)
+integer = Word(nums).setParseAction(lambda t:int(t[0]))
 
 # markers
 EOL = Suppress(LineEnd())
 
 # joining particles
-particles = ['all',  'arg1',  'arg2',  'as',  'distance',  'doc', 'filled', 'from', 'help', 'import', 'in', 'info', 'is', 'list', 'not', 'of', 'signal', 'state', 'to', 'unfilled', 'use', 'verify', 'where']
+particles = ['all',  'arg1',  'arg2',  'as',  'distance',  'doc', 'filled', 'from', 'help', 'import', 'in', 'info', 'is', 'list', 'not', 'of', 'sentence', 'signal', 'state', 'to', 'unfilled', 'use', 'verify', 'where']
 for particle in particles:
     exec('%s_ = Keyword("%s", caseless = True)' % (particle,  particle))
 
@@ -177,6 +178,8 @@ cavatStmt << (
                         |
                         alphaNums_.setResultsName("value") + Optional(as_ + browseFormat.setResultsName("format"))
                         )
+                    |
+                    sentence_.setResultsName("sentence") + integer.setResultsName('id')
                 )
             ) + EOL
 
