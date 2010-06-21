@@ -80,15 +80,18 @@ class ImportTimeML:
         self.bodyText += data
         newWords = len(data.split()) # number of tokens in this chunk of text
         self.wordOffset += newWords # advance word offset
+        data += ' '
 #        print '|'+data+'|'
-        self.sentenceOffset += len(self.sentenceBound.findall(data+' ')) # count sentences in chunk of text and advance sentence offset; expat rtrims, so add a space for detection of final full stops.
-#        print self.sentenceOffset,  'sentences'
+        self.sentenceOffset += len(self.sentenceBound.findall(data)) # count sentences in chunk of text and advance sentence offset; expat rtrims, so add a space for detection of final full stops with sentenceBound regexp.
         
         sentences = re.split(self.sentenceBound,  data)
         if len(sentences) > 1:
             self.posInSentence = len(sentences.pop().split()) # only count word offset in latest sentence
         else:
             self.posInSentence  += newWords
+        
+#        print 'Ended at sentence',  self.sentenceOffset,  'word',  self.posInSentence
+        
         
         if self.inTag:
             global cData
