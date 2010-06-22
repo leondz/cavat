@@ -1,6 +1,7 @@
 # read data from a set of timeml files in to a database
 
 import sys
+import nltk
 
 # only run this if executed as a script - avoid doing complex imports if command line if we're just going to print help and quit
 if __name__ == '__main__':
@@ -78,7 +79,7 @@ class ImportTimeML:
         
         
         self.bodyText += data
-        newWords = len(data.split()) # number of tokens in this chunk of text
+        newWords = len(nltk.word_tokenize(data)) # number of tokens in this chunk of text
         self.wordOffset += newWords # advance word offset
         data += ' '
 #        print '|'+data+'|'
@@ -86,7 +87,7 @@ class ImportTimeML:
         
         sentences = re.split(self.sentenceBound,  data)
         if len(sentences) > 1:
-            self.posInSentence = len(sentences.pop().split()) # only count word offset in latest sentence
+            self.posInSentence = len(nltk.word_tokenize(sentences.pop())) # only count word offset in latest sentence
         else:
             self.posInSentence  += newWords
         
