@@ -575,6 +575,7 @@ while not finishedProcessing:
             print '#   show     - Report generation'
             print '#   check    - Run a corpus validation module'
             print '#   debug    - Toggle debug mode'
+            print '#   browse   - Show details on an object in the current corpus'           
             print '#   exit     - Leave CAVaT'
             print '# Enter "help" followed by one of these to see the command syntax'
             continue
@@ -642,6 +643,15 @@ while not finishedProcessing:
             print '# '
             print '# Entering "debug" on its own reports on the current state; debug on and debug off can be used to adjust the value.'
             print '# Debugging information includes parse tree data and SQL executed, amongst other query-specific data.'
+            
+            continue
+            
+        elif query == 'browse':
+            print '# browse: Examine an annotated object'
+            print '# '
+            print '# Syntax is:'
+            print '#   browse <object type> <object ID>'
+            print '# Where object type is a TimeML tag, and object ID is the unique label of an instance of that tag.'
             
             continue
             
