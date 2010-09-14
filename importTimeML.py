@@ -77,6 +77,10 @@ class ImportTimeML:
 
     def charData(self,  data):
         
+        # ellipsis separated by spaces ('. . . ') tricks our sentence boundary calculation; change them to '...'
+#        data = re.replace(re.compile('\. [\. ]+'), '..', data)
+        data = data.replace('. . .', '...')
+
         
         self.bodyText += data
         newWords = len(nltk.word_tokenize(data)) # number of tokens in this chunk of text
@@ -85,11 +89,14 @@ class ImportTimeML:
 #        print '|'+data+'|'
         self.sentenceOffset += len(self.sentenceBound.findall(data)) # count sentences in chunk of text and advance sentence offset; expat rtrims, so add a space for detection of final full stops with sentenceBound regexp.
         
+
+        # check for sentence boundary crosses
         sentences = re.split(self.sentenceBound,  data)
+
         if len(sentences) > 1:
             self.posInSentence = len(nltk.word_tokenize(sentences.pop())) # only count word offset in latest sentence
         else:
-            self.posInSentence  += newWords
+            self.posInSentence += newWords
         
 #        print 'Ended at sentence',  self.sentenceOffset,  'word',  self.posInSentence
         
@@ -212,7 +219,9 @@ class ImportTimeML:
             self.bodyText = re.sub(r'<[^>]*?>', '', self.bodyText) # strip tags
             self.bodyText = re.sub(r'[\n\r\t\s]+', ' ', self.bodyText) # collapse whitespace
             timeMlFile.close()
-            
+
+ 
+            self.bodyText = self.bodyText.replace('. . .', '...')
             sentences = self.sentenceBound.split(self.bodyText)
             for i,  sentence in enumerate(sentences):
                 self.cursor.execute('INSERT INTO sentences(doc_id, sentenceID, text) VALUES(%d, %d, "%s")' % (self.doc_id,  i,  MySQLdb.escape_string(sentence)))
