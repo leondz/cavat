@@ -45,6 +45,14 @@ class ImportTimeML:
 
     sentenceBound = re.compile(r'\.[\s]',  re.MULTILINE)
 
+    
+    def cleanText(self, text):
+        text = text.replace('. . .', '...') # SJMN doc
+        text = text.replace('Inc.', 'Inc')  # wsj_0928
+        text = text.replace('U.K.', 'UK')   # wsj_0583
+        return text
+
+
     def startElement(self,  name,  attrs):
 
         global elementID
@@ -79,8 +87,7 @@ class ImportTimeML:
         
         # ellipsis separated by spaces ('. . . ') tricks our sentence boundary calculation; change them to '...'
 #        data = re.replace(re.compile('\. [\. ]+'), '..', data)
-        data = data.replace('. . .', '...')
-
+        data = self.cleanText(data)
         
         self.bodyText += data
         newWords = len(nltk.word_tokenize(data)) # number of tokens in this chunk of text
@@ -221,7 +228,7 @@ class ImportTimeML:
             timeMlFile.close()
 
  
-            self.bodyText = self.bodyText.replace('. . .', '...')
+            self.bodyText = self.cleanText(self.bodyText)
             sentences = self.sentenceBound.split(self.bodyText)
             for i,  sentence in enumerate(sentences):
                 self.cursor.execute('INSERT INTO sentences(doc_id, sentenceID, text) VALUES(%d, %d, "%s")' % (self.doc_id,  i,  MySQLdb.escape_string(sentence)))
