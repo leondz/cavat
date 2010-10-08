@@ -500,6 +500,11 @@ while not finishedProcessing:
                 i.importCorpusToDb(t.directory,  targetDb)
                 db.cursor.execute('INSERT INTO info(`key`, `data`) VALUES("cavat_version", ' + str(cavatVersion) + ')')
             except Exception,  e:
+                if cavatDebug.debug:
+                    import traceback
+                    print e
+                    print repr(traceback.extract_tb(sys.exc_info()[2]))
+
                 errorMsg(str(e))
 
             # cleanup

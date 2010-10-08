@@ -41,7 +41,8 @@ class ImportTimeML:
     wordOffset = 0
     sentenceOffset = 0
     posInSentence = 0
-    bodyText = ''
+    parsedText = ''
+    trailingSpace = False
 
     sentenceBound = re.compile(r'\.[\s]',  re.MULTILINE)
 
@@ -50,6 +51,8 @@ class ImportTimeML:
         text = text.replace('. . .', '...') # SJMN doc
         text = text.replace('Inc.', 'Inc')  # wsj_0928
         text = text.replace('U.K.', 'UK')   # wsj_0583
+        text = text.replace('p.m.', 'pm')   # NYT19980212.0019
+        text = re.sub(r'[\n\r\t\s]+', ' ', text) # collapse whitespace
         return text
 
 
@@ -74,8 +77,8 @@ class ImportTimeML:
 
         self.inTag = True
 
-        self.tags[elementID] = [name,  self.wordOffset,  self.sentenceOffset,  self.posInSentence]
-
+        self.tags[elementID] = [name, len(self.parsedText)]
+#        print elementID, len(self.parsedText), self.parsedText
 
     def endElement(self,  name):
         if self.inTag:
@@ -84,34 +87,10 @@ class ImportTimeML:
 
 
     def charData(self,  data):
-        
-        # ellipsis separated by spaces ('. . . ') tricks our sentence boundary calculation; change them to '...'
-#        data = re.replace(re.compile('\. [\. ]+'), '..', data)
-        data = self.cleanText(data)
-        
-        self.bodyText += data
-        newWords = len(nltk.word_tokenize(data)) # number of tokens in this chunk of text
-        self.wordOffset += newWords # advance word offset
-        data += ' '
-#        print '|'+data+'|'
-        self.sentenceOffset += len(self.sentenceBound.findall(data)) # count sentences in chunk of text and advance sentence offset; expat rtrims, so add a space for detection of final full stops with sentenceBound regexp.
-        
-
-        # check for sentence boundary crosses
-        sentences = re.split(self.sentenceBound,  data)
-
-        if len(sentences) > 1:
-            self.posInSentence = len(nltk.word_tokenize(sentences.pop())) # only count word offset in latest sentence
-        else:
-            self.posInSentence += newWords
-        
-#        print 'Ended at sentence',  self.sentenceOffset,  'word',  self.posInSentence
-        
-        
+        self.parsedText += data
         if self.inTag:
             global cData
             cData = data
-        pass
 
 
     def insertNodes(self,  nodes,  attribs,  table,  tlinks=False):
@@ -206,6 +185,7 @@ class ImportTimeML:
             self.sentenceOffset = 0
             self.posInSentence = 0
             self.bodyText = ''
+            self.parsedText = ''
 
             
             if not os.path.isfile(directory+fileName):
@@ -224,9 +204,7 @@ class ImportTimeML:
             timeMlFile = open(directory+fileName)
             self.bodyText = timeMlFile.read() # load file
             self.bodyText = re.sub(r'<[^>]*?>', '', self.bodyText) # strip tags
-            self.bodyText = re.sub(r'[\n\r\t\s]+', ' ', self.bodyText) # collapse whitespace
             timeMlFile.close()
-
  
             self.bodyText = self.cleanText(self.bodyText)
             sentences = self.sentenceBound.split(self.bodyText)
@@ -279,11 +257,38 @@ class ImportTimeML:
             parser.CharacterDataHandler = self.charData
 
 
-
+            xmlData = self.cleanText(xmlData) # collapse whitespace
             parser.Parse(xmlData)
 
+            # calculate sentence offset lookup table. sentence regex always matches a 2 char string.
+
+            sentenceOffset = {0:0}
+            sentenceID = 1
+            for sentence in sentences:
+                sentenceOffset[sentenceID] = sentenceOffset[sentenceID - 1] + len(sentence) + 2
+                sentenceID += 1
+            print sentenceOffset
+
+            wordOffset = {}
+            for sentenceID, sentenceText in enumerate(sentences):
+                wordOffset[sentenceID] = {}
+                sentenceTokens = nltk.word_tokenize(sentenceText)
+                rightRemainder = sentenceText
+                tokenID = 0
+
+                # repeatedly chop tokens, in order from the right-hand part of the sentence. measure what's left; sentence length - (remainder + what we chopped off) = char offset of where the token started
+                for token in sentenceTokens:
+                    rightRemainder = rightRemainder.lstrip()
+#                    print token
+                    rightRemainder = re.sub('^' + re.escape(token), '', rightRemainder)
+                    byteOffset_inSentence = len(sentenceText) - len(rightRemainder) - len(token)
+                    byteOffset_inDoc = sentenceOffset[sentenceID] + byteOffset_inSentence
+                    wordOffset[sentenceID][tokenID] = byteOffset_inDoc
+                    print '\t'.join([token, str(sentenceID), str(tokenID), str(byteOffset_inDoc)])
+                    tokenID += 1
+
+
             # add text data for tags that contain text (event, timex, signal)
-        
             for tag in self.tags:
                 if tag[0] == 's':
                     table = 'signals'
@@ -314,8 +319,33 @@ class ImportTimeML:
                 else:
                     # unknown element type - ignore
                     continue
+
+                # calculate sentence and word offset for the start tag
+
+                sentence = 0
+                token = 0
+
+                byteOffset = self.tags[tag][1]
+
+                print tag, 'byte', byteOffset,
+
+                # for sentence
+                offsets = sentenceOffset.values()
+                smallerOffsets = filter(lambda y: y <= byteOffset, offsets)
+                correctOffset = max(smallerOffsets)
+                sentence = [k for k, v in sentenceOffset.iteritems() if v == correctOffset][0]
+
+                print 'sentence', sentence,
+
+                # for token
+                offsets = wordOffset[sentence].values()
+                smallerOffsets = filter(lambda y: y <= byteOffset, offsets)
+                correctOffset = max(smallerOffsets)
+                token = [k for k, v in wordOffset[sentence].iteritems() if v == correctOffset][0]
+
+                print 'token', token
             
-                self.cursor.execute('UPDATE %s SET position = %s, sentence = %s, inSentence = %s WHERE %s = "%s" AND doc_id = %d' % (table,  self.tags[tag][1],  self.tags[tag][2],  self.tags[tag][3],   idColumn,  tag,  self.doc_id))
+                self.cursor.execute('UPDATE %s SET position = %s, sentence = %s, inSentence = %s WHERE %s = "%s" AND doc_id = %d' % (table,  byteOffset,  sentence,  token,  idColumn,  tag,  self.doc_id))
                 self.cursor.execute('UPDATE %s SET text = "%s" WHERE %s = "%s" AND doc_id = %d' % (table,  MySQLdb.escape_string(self.tagText[tag]),  idColumn,  tag,  self.doc_id))
             
             self.cursor.execute('UPDATE documents SET body = "%s" WHERE id = %d' % (MySQLdb.escape_string(self.bodyText), self.doc_id))
