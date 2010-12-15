@@ -63,14 +63,18 @@ class ImportTimeML:
         
         
         # set elementID for tags that wrap around text, to capture the text
-        if name == 'TIMEX3':
-            elementID = attrs['tid']
+        try:
+            if name == 'TIMEX3':
+                elementID = attrs['tid']
 
-        elif name == 'EVENT':
-            elementID = attrs['eid']
+            elif name == 'EVENT':
+                elementID = attrs['eid']
 
-        elif name == 'SIGNAL':
-            elementID = attrs['sid']
+            elif name == 'SIGNAL':
+                elementID = attrs['sid']
+        except:
+            print 'Missing ID in ',  attrs,  '- should contain (e.g.) eid/tid/sid'
+            sys.exit()
 
         else:
             return
@@ -301,7 +305,11 @@ class ImportTimeML:
                     # work out lemma; get first instance of this event and take pos from it, then call wordnet lemmatize
                     self.cursor.execute('SELECT pos FROM instances WHERE eventID = "%s" AND doc_id = %d' % (tag,  self.doc_id))
                     
-                    pos= self.cursor.fetchone()[0]
+                    try:
+                        pos= self.cursor.fetchone()[0]
+                    except:
+                        print 'Failed to find PoS for eventID %s in doc %s - possibly a missing MAKEINSTANCE' % (tag,  fileName)
+                        return
                     
                     if pos == '':
                         pos = 'OTHER'
