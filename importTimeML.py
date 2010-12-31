@@ -1,9 +1,9 @@
 # read data from a set of timeml files in to a database
 
 import sys
-import nltk
 
-# only run this if executed as a script - avoid doing complex imports if command line if we're just going to print help and quit
+# only run this check if executed as a script 
+# goal is to avoid doing complex imports at command line if we're just going to print help and quit
 if __name__ == '__main__':
 
     if (len(sys.argv) != 3) or sys.argv[1] == '-h':
@@ -15,8 +15,11 @@ if __name__ == '__main__':
         sys.exit()
 
 
+import db
 import MySQLdb
+import nltk
 import os
+import re
 import string
 from xml.dom import minidom
 import xml.parsers.expat
@@ -24,9 +27,7 @@ import warnings
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
     from nltk.stem import wordnet as wn
-import re
 
-import db
 
 class ImportTimeML:
 
