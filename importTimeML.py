@@ -66,18 +66,15 @@ class ImportTimeML:
         try:
             if name == 'TIMEX3':
                 elementID = attrs['tid']
-
             elif name == 'EVENT':
                 elementID = attrs['eid']
-
             elif name == 'SIGNAL':
                 elementID = attrs['sid']
-        except:
-            print 'Missing ID in ',  attrs,  '- should contain (e.g.) eid/tid/sid'
-            sys.exit()
+            else:
+                return
 
-        else:
-            return
+        except:
+            raise Exception('Missing ID in ' + str(attrs) + '- should contain (e.g.) eid/tid/sid')
 
         self.inTag = True
 
