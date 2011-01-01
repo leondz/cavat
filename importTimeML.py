@@ -53,6 +53,7 @@ class ImportTimeML:
         text = text.replace('Inc.', 'Inc')  # wsj_0928
         text = text.replace('U.K.', 'UK')   # wsj_0583
         text = text.replace('p.m.', 'pm')   # NYT19980212.0019
+        text = text.replace("``", "''")     # to avoid tokenisation disputes between nltk.word_tokenize and charniak parser
         text = re.sub(r'[\n\r\t\s]+', ' ', text) # collapse whitespace
         return text
 
