@@ -18,6 +18,7 @@ if __name__ == '__main__':
 import db
 import MySQLdb
 import nltk
+import nltk.data
 import os
 import re
 import string
@@ -45,7 +46,7 @@ class ImportTimeML:
     parsedText = ''
     trailingSpace = False
 
-    sentenceBound = re.compile(r'\.[\s]',  re.MULTILINE)
+    sentenceDetector = nltk.data.load('tokenizers/punkt/english.pickle') 
 
     
     def cleanText(self, text):
@@ -210,7 +211,7 @@ class ImportTimeML:
             timeMlFile.close()
  
             self.bodyText = self.cleanText(self.bodyText)
-            sentences = self.sentenceBound.split(self.bodyText)
+            sentences = self.sentenceDetector.tokenize(self.bodyText)
             for i,  sentence in enumerate(sentences):
                 self.cursor.execute('INSERT INTO sentences(doc_id, sentenceID, text) VALUES(%d, %d, "%s")' % (self.doc_id,  i,  MySQLdb.escape_string(sentence)))
 
