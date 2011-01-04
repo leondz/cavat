@@ -15,8 +15,8 @@ class split_graph(CavatModule):
     _maxVersion = 0.999
     
     superVerbose = cavatDebug.debug
-    printGraphs = False
-    extraStats = False
+    printGraphs = True
+    extraStats = True
     listMembers = True
 
 
