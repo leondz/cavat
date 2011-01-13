@@ -80,7 +80,7 @@ class ImportTimeML:
 
         self.inTag = True
 
-        self.tags[elementID] = [name, len(self.parsedText)]
+        self.tags[elementID] = [name, len(self.parsedText)] # store the byte offset of this tag, calculated by the length of parsedText so far
 #        print elementID, len(self.parsedText), self.parsedText
 
     def endElement(self,  name):
@@ -90,7 +90,12 @@ class ImportTimeML:
 
 
     def charData(self,  data):
-        self.parsedText += data
+        self.parsedText += data # append the data to parsedText
+        punktCompensation = 0
+        punktCompensation = data.count('." ') + data.count(".'' ") + data.count('?" ') + data.count('.) ')
+        if punktCompensation: # compensate for chars omitted by punkt-sentence-tokenization decisions
+            print '|' + data + '|'
+            self.parsedText += 'x'*punktCompensation
         if self.inTag:
             global cData
             cData = data
@@ -261,14 +266,15 @@ class ImportTimeML:
 
 
             xmlData = self.cleanText(xmlData) # collapse whitespace
-            parser.Parse(xmlData)
+            parser.Parse(xmlData) # run sax parser - includes offset calculation
 
             # calculate sentence offset lookup table. sentence regex always matches a 2 char string.
 
+            # of the format {sentence ID : byte offset of sentence's start in document}
             sentenceOffset = {0:0}
             sentenceID = 1
             for sentence in sentences:
-                sentenceOffset[sentenceID] = sentenceOffset[sentenceID - 1] + len(sentence) + 2
+                sentenceOffset[sentenceID] = sentenceOffset[sentenceID - 1] + len(sentence) +1 # what's this +1 for? the trailing \n - punkt does not cut anything else out when tokenising.
                 sentenceID += 1
             print sentenceOffset
 
@@ -341,16 +347,16 @@ class ImportTimeML:
                 # for sentence
                 offsets = sentenceOffset.values()
                 smallerOffsets = filter(lambda y: y <= byteOffset, offsets)
-                correctOffset = max(smallerOffsets)
-                sentence = [k for k, v in sentenceOffset.iteritems() if v == correctOffset][0]
+                correctOffset = max(smallerOffsets) # which is the largest sentence byte-offset that's less than the tag offset?
+                sentence = [k for k, v in sentenceOffset.iteritems() if v == correctOffset][0] # find the ID of the sentence that has this byte offset
 
                 print 'sentence', sentence,
 
                 # for token
                 offsets = wordOffset[sentence].values()
-                smallerOffsets = filter(lambda y: y <= byteOffset, offsets)
-                correctOffset = max(smallerOffsets)
-                token = [k for k, v in wordOffset[sentence].iteritems() if v == correctOffset][0]
+                smallerOffsets = filter(lambda y: y <= byteOffset, offsets) # which is the largest word-offset that's less than the tag offset?
+                correctOffset = max(smallerOffsets) # store largest token-start byte-offset that's less than element start offset, that is, the offset of the word-start boundary equal-to/just-before this one
+                token = [k for k, v in wordOffset[sentence].iteritems() if v == correctOffset][0] # look up the token number
 
                 print 'token', token
             
@@ -361,7 +367,10 @@ class ImportTimeML:
             
             
         
-        
+        print 'From SAX parse:'
+        print self.parsedText
+        print 'From sentences + tokenisation'
+        print ' '.join(sentences)
 
         print 'Updating DB metadata'
 
