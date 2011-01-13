@@ -282,7 +282,6 @@ class ImportTimeML:
                 # repeatedly chop tokens, in order from the right-hand part of the sentence. measure what's left; sentence length - (remainder + what we chopped off) = char offset of where the token started
                 for token in sentenceTokens:
                     rightRemainder = rightRemainder.lstrip()
-#                    print token
                     rightRemainder = re.sub('^' + re.escape(token), '', rightRemainder)
                     byteOffset_inSentence = len(sentenceText) - len(rightRemainder) - len(token)
                     byteOffset_inDoc = sentenceOffset[sentenceID] + byteOffset_inSentence
@@ -301,7 +300,7 @@ class ImportTimeML:
                     table = 'events'
                     idColumn = 'eid'
                     
-                    # work out lemma; get first instance of this event and take pos from it, then call wordnet lemmatize
+                    # look up PoS for lemmatiser
                     self.cursor.execute('SELECT pos FROM instances WHERE eventID = "%s" AND doc_id = %d' % (tag,  self.doc_id))
                     
                     try:
@@ -313,10 +312,13 @@ class ImportTimeML:
                     if pos == '':
                         pos = 'OTHER'
 
+                    # work out lemma; get first instance of this event and take pos from it, then call wordnet lemmatize
                     lemmatext = string.lower(string.strip(str(self.tagText[tag]))).translate(tTable,  string.punctuation)
                     with warnings.catch_warnings():
                         warnings.simplefilter('ignore')
                         lemma = l.lemmatize(lemmatext,  timebankToWordnet[pos])
+                    
+                    # save lemma
                     self.cursor.execute('UPDATE events SET lemma = "%s" WHERE eid = "%s" AND doc_id = %d' % (MySQLdb.escape_string(lemma), tag,  self.doc_id))
                     
                 elif tag[0] == 't':
