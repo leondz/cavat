@@ -99,12 +99,12 @@ class orphans(CavatModule):
             orphans.add('INSTANCE ' + str(instance_[0]) + 'does not reference an event')
 
 
-        # signals not referenced by any tlink or instance
-        if not runQuery('SELECT sid FROM signals WHERE sid NOT IN (SELECT signalID FROM tlinks WHERE doc_id = %s) AND sid NOT IN (SELECT signalID FROM instances WHERE doc_id = %s) AND doc_id = %s' % (doc_id,  doc_id,  doc_id)):
+        # signals not referenced by any tlink, alink, slink or instance
+        if not runQuery('SELECT sid FROM signals WHERE doc_id = %s AND sid NOT IN (SELECT signalID FROM tlinks WHERE doc_id = %s AND signalID IS NOT NULL) AND sid NOT IN (SELECT signalID FROM slinks WHERE doc_id = %s AND signalID IS NOT NULL) AND sid NOT IN (SELECT signalID FROM alinks WHERE doc_id = %s AND signalID IS NOT NULL) AND sid NOT IN (SELECT signalID FROM instances WHERE doc_id = %s AND signalID IS NOT NULL)' % (doc_id,  doc_id, doc_id,  doc_id, doc_id)):
             return
         
         for sid_ in list(db.cursor.fetchall()):
-            orphans.add('SIGNAL ' + str(sid_[0]) + 'is not referenced by any TLINK or INSTANCE')
+            orphans.add('SIGNAL ' + str(sid_[0]) + 'is not referenced by any TLINK, SLINK, ALINK or MAKEINSTANCE')
         
         
         
