@@ -3,7 +3,15 @@ import math
 from cavatDebug import debug
 
 def round_figures(x, n):
-    return round(x, int(n - math.ceil(math.log10(abs(x)))))
+    # round, but trim the number of figures returned after the decimal for large numbers.
+    amount_to_round = 3
+    
+    try: # log10(0) raises an exception
+        amount_to_round = int(n - math.ceil(math.log10(abs(x))))
+    except ValueError,  e:
+        amount_to_round = 1
+    
+    return round(x, amount_to_round)
 
 def errorMsg(message,  LF = False):
     

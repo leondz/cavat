@@ -327,7 +327,8 @@ while not finishedProcessing:
                 continue
             
             totalRecords = db.cursor.fetchone()[0]
-            sqlField = sqlFieldName + ', ' + sqlCount + ', CAST((COUNT('+sqlFieldName+')/'+str(totalRecords)+') AS DECIMAL(10,10)) AS percent'
+            # add the .0 after totalrecords so that float division is performed
+            sqlField = sqlFieldName + ', ' + sqlCount + ', (COUNT('+sqlFieldName+')/'+str(totalRecords)+'.0) AS percent'
 
             # if we are generating a report about a numeric value, sort the table by that value, not by frequency; this way round, it's easier to spot lumps / import into a histogram
             if (sqlTable + '.' + sqlFieldName).lower() in numericFields:
@@ -424,6 +425,8 @@ while not finishedProcessing:
                 
                 continue
             
+            else:
+                print '! Failed to change database to ' + t.database
             
         elif t.info:
             # show corpus info - select * from info, print
@@ -433,7 +436,7 @@ while not finishedProcessing:
             
             results = db.cursor.fetchall()
             
-            print "\n# Info for corpus in database '" + dbName +"' (prefix is '" + dbPrefix + "')\n"
+            print "\n# Info for corpus in database '" + dbName +"' (prefix is '" + db.prefix + "')\n"
             
             for row in results:
                 print str(row[0]).rjust(30,  ' ') + ":  " + row[1]
@@ -473,6 +476,7 @@ while not finishedProcessing:
             try:
                 i.importCorpusToDb(t.directory,  targetDb)
                 db.cursor.execute('INSERT INTO info(`key`, `data`) VALUES("cavat_version", ' + str(cavatVersion) + ')')
+                db.conn.commit()
             except Exception,  e:
                 if cavatDebug.debug:
                     import traceback

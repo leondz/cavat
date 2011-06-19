@@ -1,6 +1,8 @@
 from cavatMessages import errorMsg
 import MySQLdb
 import cavatDebug
+import os
+import sqlite3
 import sys
 
 
@@ -16,15 +18,19 @@ def connect(config):
     
     global engine,  prefix
     
-    engine = config.get('cavat',  'dbtype')
-    prefix = config.get('cavat',  'dbprefix')
+    try:
+        engine = config.get('cavat',  'dbtype')
+        prefix = config.get('cavat',  'dbprefix')
+    except Exception,  e:
+        print '! Failure reading ini file: ' + str(e)
+        sys.exit()
     
     if engine == 'mysql':
         try:
-            dbUser = config.get('cavat',  'dbuser')
             dbHost = config.get('cavat',  'dbhost')
+            dbUser = config.get('cavat',  'dbuser')
         except Exception,  e:
-            print '! Failure reading ini file: ' + str(e)
+            print '! Failure reading db user+host: ' + str(e)
             sys.exit()
             
 
@@ -37,8 +43,10 @@ def connect(config):
             from getpass import getpass
             dbPass = getpass('Enter MySQL password for user "' + dbUser + '": ').strip()
         
-        return mysql_connect(dbHost, dbUser, dbPass)
+        return mysql_connect(dbHost,  dbUser, dbPass)
 
+    if engine == 'sqlite':
+        return sqlite_connect()
 
 
 def mysql_connect(host,  user,  passwd):
@@ -56,21 +64,57 @@ def mysql_connect(host,  user,  passwd):
 
     return
 
+# dummy function; changing db and connection to a db are the same thing for sqlite.
+def sqlite_connect():
+    return
+
+
 # takes a dbname and optionally a dbprefix, and switches the connection to using that db
 def changeDb(dbName):
     
-    global engine,  prefix,  conn,  cursor
+    global engine
     
     if engine == 'mysql':
-        
-        try:
-            conn.select_db(prefix + '_' + dbName)
-        except:
-            errorMsg('Could not switch to database '+dbName)
-            return False
-        
-        cursor = conn.cursor()
-        return True
+        return mysql_changeDb(dbName)
+    elif engine == 'sqlite':
+        return sqlite_changeDb(dbName)
+
+
+# takes a dbname, sets up an sqlite connection to the db file.
+def sqlite_changeDb(dbname):
+    
+    global prefix,  conn,  cursor
+    
+    # check to see if dir exists (prefix is a path to the db dir)
+    try:
+        if not os.path.exists(prefix):
+            os.makedirs(prefix)
+    except:
+        print '! Could not create directory: ' + prefix
+        return False
+
+    try:
+        conn = sqlite3.connect(os.path.join(prefix,  dbname))
+    except Exception,  e:
+        print '! SQLite Connection failed: ' + str(e)
+        return False
+    
+    cursor = conn.cursor()
+
+    return True
+
+def mysql_changeDb(dbName):
+
+    global prefix,  conn,  cursor
+
+    try:
+        conn.select_db(prefix + '_' + dbName)
+    except:
+        errorMsg('Could not switch to database '+dbName)
+        return False
+    
+    cursor = conn.cursor()
+    return True
 
 
 def runQuery(sqlQuery,  failureMessage = 'Query failed.'):
@@ -108,12 +152,20 @@ def listCorpora():
             corporaList.append(listedDb)
         
 
+    if engine == 'sqlite':
+        corporaList = os.listdir(prefix)
+
     corporaList.sort
 
     return corporaList
 
 
 def close():
-    cursor.close()
-    conn.close()
+
+    if cursor != None:
+        cursor.close()
+
+    if conn != None:
+        conn.close()
+    
     return

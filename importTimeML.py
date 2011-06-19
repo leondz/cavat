@@ -35,6 +35,7 @@ class ImportTimeML:
     doc_id = None
     conn = None
     cursor = None
+    engine = None
     tlinkFieldMapping = {'eventInstanceID':'arg1',  'timeID':'arg1',  'relatedToEventInstance':'arg2',  'relatedToTime':'arg2'}
 
     tags = {}
@@ -132,7 +133,7 @@ class ImportTimeML:
             
             #print sql
             try:
-                self.cursor.execute(sql)
+                db.cursor.execute(sql)
             except Exception,  e:
                 print sql,  str(e)
                 sys.exit()
@@ -142,11 +143,6 @@ class ImportTimeML:
 
     def importCorpusToDb(self,  directory,  dbName):
         # global vars
-        
-        if not self.conn:
-            self.conn = db.conn
-            self.cursor = db.cursor
-
 
         print >> sys.stderr,  '==============================================================='
         print >> sys.stderr,  'Reading from ' + directory
@@ -168,16 +164,21 @@ class ImportTimeML:
 
 
         # reset database
-        tableCreationSql = open('db_header.sql').read()
+        tableCreationSql = open('db_header_'+db.engine+'.sql').read()
 
-        self.cursor.execute('DROP DATABASE IF EXISTS %s' % dbName)
-        self.cursor.execute('CREATE DATABASE %s' % dbName)
-        self.conn.select_db(dbName)
+        if db.engine == 'mysql':
+            db.cursor.execute('DROP DATABASE IF EXISTS %s' % dbName)
+            db.cursor.execute('CREATE DATABASE %s' % dbName)
+        
+        if db.engine == 'sqlite':
+            os.unlink(os.path.join(db.prefix,  dbName))
+        
+        db.changeDb(dbName)
 
 
         for creationSql in tableCreationSql.split(';'):
             if len(creationSql.strip()) > 0:
-                self.cursor.execute(creationSql)
+                db.cursor.execute(creationSql)
 
         
         # read directory
@@ -203,8 +204,8 @@ class ImportTimeML:
                 #skip hidden files
                 continue;
             
-            self.cursor.execute('INSERT INTO documents(docname) VALUES ("' + fileName + '")')
-            self.doc_id = int(self.cursor.lastrowid)
+            db.cursor.execute('INSERT INTO documents(docname) VALUES ("' + fileName + '")')
+            self.doc_id = int(db.cursor.lastrowid)
 
             print fileName,  'as',  self.doc_id
 
@@ -217,7 +218,7 @@ class ImportTimeML:
             self.bodyText = self.cleanText(self.bodyText)
             sentences = self.sentenceDetector.tokenize(self.bodyText)
             for i,  sentence in enumerate(sentences):
-                self.cursor.execute('INSERT INTO sentences(doc_id, sentenceID, text) VALUES(%d, %d, "%s")' % (self.doc_id,  i,  MySQLdb.escape_string(sentence)))
+                db.cursor.execute('INSERT INTO sentences(doc_id, sentenceID, text) VALUES(?, ?, ?)',  (self.doc_id,  i,  sentence))
 
             # get minidom data - element attribute cataloguing
 
@@ -307,10 +308,10 @@ class ImportTimeML:
                     idColumn = 'eid'
                     
                     # look up PoS for lemmatiser
-                    self.cursor.execute('SELECT pos FROM instances WHERE eventID = "%s" AND doc_id = %d' % (tag,  self.doc_id))
+                    db.cursor.execute('SELECT pos FROM instances WHERE eventID = "%s" AND doc_id = %d' % (tag,  self.doc_id))
                     
                     try:
-                        pos= self.cursor.fetchone()[0]
+                        pos= db.cursor.fetchone()[0]
                     except:
                         print 'Failed to find PoS for eventID %s in doc %s - possibly a missing MAKEINSTANCE' % (tag,  fileName)
                         return
@@ -325,7 +326,7 @@ class ImportTimeML:
                         lemma = l.lemmatize(lemmatext,  timebankToWordnet[pos])
                     
                     # save lemma
-                    self.cursor.execute('UPDATE events SET lemma = "%s" WHERE eid = "%s" AND doc_id = %d' % (MySQLdb.escape_string(lemma), tag,  self.doc_id))
+                    db.cursor.execute('UPDATE events SET lemma = "%s" WHERE eid = "%s" AND doc_id = %d' % (MySQLdb.escape_string(lemma), tag,  self.doc_id))
                     
                 elif tag[0] == 't':
                     table = 'timex3s'
@@ -360,10 +361,12 @@ class ImportTimeML:
 
                 print 'token', token
             
-                self.cursor.execute('UPDATE %s SET position = %s, sentence = %s, inSentence = %s WHERE %s = "%s" AND doc_id = %d' % (table,  byteOffset,  sentence,  token,  idColumn,  tag,  self.doc_id))
-                self.cursor.execute('UPDATE %s SET text = "%s" WHERE %s = "%s" AND doc_id = %d' % (table,  MySQLdb.escape_string(self.tagText[tag]),  idColumn,  tag,  self.doc_id))
+                db.cursor.execute('UPDATE %s SET position = ?, sentence = ?, inSentence = ? WHERE %s = ? AND doc_id = ?' % 
+                                  (table,  idColumn),  (byteOffset,  sentence,  token, tag,  self.doc_id))
+                db.cursor.execute('UPDATE %s SET text = ? WHERE %s = ? AND doc_id = ?' % 
+                                  (table,  idColumn),  (self.tagText[tag],  tag,  self.doc_id))
             
-            self.cursor.execute('UPDATE documents SET body = "%s" WHERE id = %d' % (MySQLdb.escape_string(self.bodyText), self.doc_id))
+            db.cursor.execute('UPDATE documents SET body = ? WHERE id = ?',  (self.bodyText, self.doc_id))
             
             
         
@@ -374,9 +377,14 @@ class ImportTimeML:
 
         print 'Updating DB metadata'
 
-        self.cursor.execute('INSERT INTO info(`key`, `data`) VALUES("imported_at", NOW())')
-        self.cursor.execute('INSERT INTO info(`key`, `data`) VALUES("imported_to_db", %s)',  (dbName,))
-        self.cursor.execute('INSERT INTO info(`key`, `data`) VALUES("imported_from_directory", %s)',  (directory,))
+        if db.engine == 'mysql':
+            db.cursor.execute('INSERT INTO info(`key`, `data`) VALUES("imported_at", NOW())')
+        elif db.engine == 'sqlite':
+            db.cursor.execute('INSERT INTO info(`key`, `data`) VALUES("imported_at", datetime("now") || " UTC")')
+        
+        # use tailing commas so that strings aren't interpreted as a list of characters, but instead a single string entry.
+        db.cursor.execute('INSERT INTO info(`key`, `data`) VALUES("imported_to_db", ?)',  (dbName, ))
+        db.cursor.execute('INSERT INTO info(`key`, `data`) VALUES("imported_from_directory", ?)',  (directory, ))
 
         if os.path.exists(directory + '.nfo'):
             nfo = open(directory + '.nfo',  'r')
@@ -389,20 +397,13 @@ class ImportTimeML:
                 else:
                     continue
 
-                self.cursor.execute('INSERT INTO info(`key`, `data`) VALUES(%s, %s)',  (key, data))
-
+                db.cursor.execute('INSERT INTO info(`key`, `data`) VALUES(?, ?)',  (key, data))
+        
+        if db.engine == 'sqlite':
+            db.conn.commit()
 
 
 
 
 if __name__ == '__main__':
-    
-    i = ImportTimeML()
-    i.conn = MySQLdb.connect (host = "localhost", user = "timebank", passwd = "timebank")
-    i.cursor = conn.cursor()
-    
-    
-    directory = sys.argv[1] + '/'
-    dbName = 'timebank_' + sys.argv[2]
-
-    i.importCorpusToDb(directory,  dbName)
+    sys.exit('Only to be executed from CAVaT.')
