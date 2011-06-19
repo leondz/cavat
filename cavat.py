@@ -10,7 +10,6 @@ import ConfigParser
 
 # for database
 import db
-from db import runQuery
 import warnings
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
@@ -31,7 +30,7 @@ from cavatMessages import *
 import cavatDebug
 
 
-cavatVersion = 0.21
+cavatVersion = 0.22
 db.version = cavatVersion
 
 def buildSqlWhereClause(wheres):
@@ -68,24 +67,8 @@ try:
 except:
     moduleDir = 'modules'
 
-# db variables
-try:
-    dbPrefix = config.get('cavat',  'dbprefix')
-    dbUser = config.get('cavat',  'dbuser')
-    dbHost = config.get('cavat',  'dbhost')
-except Exception,  e:
-    print '! Failure reading ini file: ' + str(e)
-    sys.exit()
 
-# if no pass or a blank pass is set in the database, prompt for a mysql password
-try:
-    dbPass = config.get('cavat',  'dbpass')
-    if not dbPass:
-        raise Exception
-except Exception,  e:
-    from getpass import getpass
-    dbPass = getpass('Enter MySQL password for user "' + dbUser + '": ').strip()
-
+# db connection
 dbName = None
 try:
     dbName = config.get('cavat',  'dbname')
@@ -93,7 +76,7 @@ except:
     pass
 
 
-db.connect(dbHost,  dbUser,  dbPass)
+db.connect(config)
 if dbName:
     db.changeDb(dbName)
 
@@ -340,7 +323,7 @@ while not finishedProcessing:
             sqlCount = 'COUNT(' + sqlFieldName + ') AS count '
             
             # run a quick pre-query to see the total number of results returned
-            if not runQuery('SELECT '+ sqlCount + ' FROM ' + sqlTable + ' ' + buildSqlWhereClause(sqlWheres)):
+            if not db.runQuery('SELECT '+ sqlCount + ' FROM ' + sqlTable + ' ' + buildSqlWhereClause(sqlWheres)):
                 continue
             
             totalRecords = db.cursor.fetchone()[0]
@@ -362,13 +345,13 @@ while not finishedProcessing:
             # - place into an array, pass to outputResults
             # - continue
 
-            if not runQuery("SELECT COUNT(*) FROM " + sqlTable + buildSqlWhereClause(sqlWheres)):
+            if not db.runQuery("SELECT COUNT(*) FROM " + sqlTable + buildSqlWhereClause(sqlWheres)):
                 continue
             totalTags = db.cursor.fetchone()[0]
             
             sqlWheres.append(sqlFieldName + ' IS NOT NULL')
 
-            if not runQuery('SELECT COUNT(*) FROM ' + sqlTable + buildSqlWhereClause(sqlWheres)):
+            if not db.runQuery('SELECT COUNT(*) FROM ' + sqlTable + buildSqlWhereClause(sqlWheres)):
                 continue
             filledTags = db.cursor.fetchone()[0]
             
@@ -400,7 +383,7 @@ while not finishedProcessing:
             # build and execute query
             sqlQuery = 'SELECT '+ sqlDistinct + sqlField + ' FROM ' + sqlTable + ' ' + sqlWhere + sqlGroup + sqlOrder
 
-            if not runQuery(sqlQuery):
+            if not db.runQuery(sqlQuery):
                 continue
             
             results = list(db.cursor.fetchall())
@@ -421,17 +404,11 @@ while not finishedProcessing:
         
         if t.use:
             # code for db switching
-            
-            if t.database != dbPrefix:
-                dbName = dbPrefix + '_' + t.database
-            else:
-                dbName = dbPrefix
-            
             if db.changeDb(dbName):
                 print "# Corpus database changed to " + t.database
                 # do a version check here
                 
-                if not runQuery('SELECT data FROM info WHERE `key` = "cavat_version"'):
+                if not db.runQuery('SELECT data FROM info WHERE `key` = "cavat_version"'):
                     continue
                 
                 try:
@@ -451,7 +428,7 @@ while not finishedProcessing:
         elif t.info:
             # show corpus info - select * from info, print
             
-            if not runQuery('SELECT * FROM info ORDER BY `key` ASC',  "no info table found?"):
+            if not db.runQuery('SELECT * FROM info ORDER BY `key` ASC',  "no info table found?"):
                 continue
             
             results = db.cursor.fetchall()
@@ -461,7 +438,7 @@ while not finishedProcessing:
             for row in results:
                 print str(row[0]).rjust(30,  ' ') + ":  " + row[1]
             
-            if not runQuery('SELECT COUNT(*) FROM documents'):
+            if not db.runQuery('SELECT COUNT(*) FROM documents'):
                 continue
             
             results = db.cursor.fetchone()
@@ -469,7 +446,7 @@ while not finishedProcessing:
             print "\n# Total %s documents in this corpus, including:" % (results)
             
             for tag in validTags:
-                if not runQuery('SELECT COUNT(*) FROM ' + tag + 's'):
+                if not db.runQuery('SELECT COUNT(*) FROM ' + tag + 's'):
                     continue
                 
                 results = db.cursor.fetchone()
@@ -490,10 +467,7 @@ while not finishedProcessing:
                 # don't care about seeing each file processed
                 sys.stdout = open('/dev/null',  'w')
             
-            if t.database == dbPrefix:
-                targetDb = dbPrefix
-            else:
-                targetDb = dbPrefix + '_' + t.database
+            targetDb = t.database
             
             e = None
             try:
@@ -526,19 +500,9 @@ while not finishedProcessing:
             # show available databases
             print "# Listing available databases for 'corpus use'"
             
-            if not runQuery('SHOW DATABASES LIKE "' + dbPrefix + '%"'):
-                continue
+            results = db.listCorpora()
             
-            results = db.cursor.fetchall()
-            
-            for row in results:
-                listedDb = str(row[0])
-                
-                # strip prefix from databases
-                if listedDb != dbPrefix:
-                    listedDb = listedDb.replace(dbPrefix + '_',  '')
-                
-                print '', listedDb
+            print ', '.join(results)
 
 
         else:
@@ -760,7 +724,7 @@ while not finishedProcessing:
             
             if sourceList[0].lower() == 'all':
                 
-                if not runQuery('SELECT id FROM documents'):
+                if not db.runQuery('SELECT id FROM documents'):
                     continue
                 
                 results = db.cursor.fetchall()
@@ -772,7 +736,7 @@ while not finishedProcessing:
                 # it's not a document id; try to look up all strings in docList against documents.docname
                 
                 for source in sourceList:
-                    if not runQuery('SELECT id FROM documents WHERE docname = "' + source + '"'):
+                    if not db.runQuery('SELECT id FROM documents WHERE docname = "' + source + '"'):
                         continue
                     
                     results = db.cursor.fetchone()
@@ -787,7 +751,7 @@ while not finishedProcessing:
             elif sourceList[0].isdigit():
                 
                 for source in sourceList:
-                    if not runQuery('SELECT id FROM documents WHERE id = "' + source + '"'):
+                    if not db.runQuery('SELECT id FROM documents WHERE id = "' + source + '"'):
                         continue
                     
                     results = db.cursor.fetchone()
@@ -829,7 +793,7 @@ while not finishedProcessing:
                 continue
             
             if t.list:
-                if not runQuery('SELECT id, docname FROM documents ORDER BY id ASC'):
+                if not db.runQuery('SELECT id, docname FROM documents ORDER BY id ASC'):
                     continue
                 
 
@@ -846,14 +810,14 @@ while not finishedProcessing:
             # populate both name and id fields
             if t.target.isdigit():
                 browsedoc = t.target
-                if not runQuery('SELECT docname FROM documents WHERE id = "%s"' % (t.target)):
+                if not db.runQuery('SELECT docname FROM documents WHERE id = "%s"' % (t.target)):
                     errorMsg('Document ID %s not found in corpus' % (t.target))
                     continue
                 docname = db.cursor.fetchone()[0]
                 
             else:
                 docname = t.target
-                if not runQuery('SELECT id FROM documents WHERE docname = "%s"' % (t.target)):
+                if not db.runQuery('SELECT id FROM documents WHERE docname = "%s"' % (t.target)):
                     errorMsg('Document %s not found in corpus' % (t.target))
                     continue
                 browsedoc = db.cursor.fetchone()[0]
@@ -877,7 +841,7 @@ while not finishedProcessing:
             idColumn = idPrefix + 'id'
 
             if t.list: # are we just going to list all IDs?
-                if not runQuery('SELECT %s FROM %ss WHERE doc_id = %s ORDER BY %s' % (idColumn,  t.tag,  cavatBrowse.doc[dbName],  idColumn)):
+                if not db.runQuery('SELECT %s FROM %ss WHERE doc_id = %s ORDER BY %s' % (idColumn,  t.tag,  cavatBrowse.doc[dbName],  idColumn)):
                     continue
                 
                 results = list(db.cursor.fetchall())
@@ -894,7 +858,7 @@ while not finishedProcessing:
                     value = t.value.lower()
                 
                 # get all fields for the appropriate tag
-                if not runQuery('SELECT * FROM %ss WHERE doc_id = %s AND %s = "%s"' % (t.tag,  cavatBrowse.doc[dbName], idColumn,  value)):
+                if not db.runQuery('SELECT * FROM %ss WHERE doc_id = %s AND %s = "%s"' % (t.tag,  cavatBrowse.doc[dbName], idColumn,  value)):
                     continue
                 
                 # get a list of column headings too
