@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS `timex3s` (
   `endPoint` varchar(100) default NULL,
   `quant` text,
   `freq` text,
-  `temporalFunction` text  NOT NULL,
+  `temporalFunction` text  NOT NULL default 'false',
   `value` text NOT NULL,
   `mod` text  default NULL,
   `anchorTimeID` varchar(100) default NULL,
