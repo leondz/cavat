@@ -16,7 +16,6 @@ if __name__ == '__main__':
 
 
 import db
-import MySQLdb
 import nltk
 import nltk.data
 import os
@@ -55,6 +54,11 @@ class ImportTimeML:
         text = text.replace('Inc.', 'Inc')  # wsj_0928
         text = text.replace('U.K.', 'UK')   # wsj_0583
         text = text.replace('p.m.', 'pm')   # NYT19980212.0019
+        # when xml elements have space on both sides, the text offsets of words in cleaned xml and cleaned plaintext will differ
+        # e.g. "  fish swim." becomes " fish swim", but " <event> fish</event> swim." becomes "  fish swim"
+        # to remedy this, we should take special notice of element tags that have space on both sides.
+        text = re.sub(r'[\n\r\t\s]+(<[^>]+>)[\n\r\t\s]+',  r' \1',  text)
+        text = re.sub(r'[\n\r\t\s]+(</[^>]+>)[\n\r\t\s]+',  r'\1 ',  text)
         text = re.sub(r'[\n\r\t\s]+', ' ', text) # collapse whitespace
         return text
 
@@ -171,7 +175,9 @@ class ImportTimeML:
             db.cursor.execute('CREATE DATABASE %s' % dbName)
         
         if db.engine == 'sqlite':
-            os.unlink(os.path.join(db.prefix,  dbName))
+            db_path = os.path.join(db.prefix,  dbName)
+            if os.path.exists(db_path):
+                os.unlink(db_path)
         
         db.changeDb(dbName)
 
@@ -215,7 +221,10 @@ class ImportTimeML:
             self.bodyText = re.sub(r'<[^>]*?>', '', self.bodyText) # strip tags
             timeMlFile.close()
  
+            # collapse whitespaces (this is also done before processing by sax parser)
             self.bodyText = self.cleanText(self.bodyText)
+            print self.bodyText
+
             sentences = self.sentenceDetector.tokenize(self.bodyText)
             for i,  sentence in enumerate(sentences):
                 db.cursor.execute('INSERT INTO sentences(doc_id, sentenceID, text) VALUES(?, ?, ?)',  (self.doc_id,  i,  sentence))
@@ -321,12 +330,17 @@ class ImportTimeML:
 
                     # work out lemma; get first instance of this event and take pos from it, then call wordnet lemmatize
                     lemmatext = string.lower(string.strip(str(self.tagText[tag]))).translate(tTable,  string.punctuation)
+                    if pos not in timebankToWordnet.keys():
+                        wnPos = 'n' # default pos
+                    else:
+                        wnPos = timebankToWordnet[pos]
+                    
                     with warnings.catch_warnings():
                         warnings.simplefilter('ignore')
-                        lemma = l.lemmatize(lemmatext,  timebankToWordnet[pos])
+                        lemma = l.lemmatize(lemmatext,  wnPos)
                     
                     # save lemma
-                    db.cursor.execute('UPDATE events SET lemma = "%s" WHERE eid = "%s" AND doc_id = %d' % (MySQLdb.escape_string(lemma), tag,  self.doc_id))
+                    db.cursor.execute('UPDATE events SET lemma = ? WHERE eid = ? AND doc_id = ?',  (lemma, tag,  self.doc_id))
                     
                 elif tag[0] == 't':
                     table = 'timex3s'
