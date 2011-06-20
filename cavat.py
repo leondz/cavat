@@ -10,10 +10,6 @@ import ConfigParser
 
 # for database
 import db
-import warnings
-with warnings.catch_warnings():
-    warnings.simplefilter('ignore')
-    import MySQLdb
 
 # for processing CAVaT commands
 from pyparsing import ParseException
@@ -480,7 +476,7 @@ while not finishedProcessing:
             except Exception,  e:
                 if cavatDebug.debug:
                     import traceback
-                    print e
+                    print sys.exc_info()[0],  e
                     print repr(traceback.extract_tb(sys.exc_info()[2]))
 
                 errorMsg(str(e))
