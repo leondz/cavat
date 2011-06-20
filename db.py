@@ -1,8 +1,6 @@
 from cavatMessages import errorMsg
-import MySQLdb
 import cavatDebug
 import os
-import sqlite3
 import sys
 
 
@@ -26,6 +24,13 @@ def connect(config):
         sys.exit()
     
     if engine == 'mysql':
+        
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            import MySQLdb
+
+        
         try:
             dbHost = config.get('cavat',  'dbhost')
             dbUser = config.get('cavat',  'dbuser')
@@ -92,6 +97,8 @@ def sqlite_changeDb(dbname):
     except:
         print '! Could not create directory: ' + prefix
         return False
+
+    import sqlite3
 
     try:
         conn = sqlite3.connect(os.path.join(prefix,  dbname))
