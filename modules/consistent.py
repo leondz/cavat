@@ -89,10 +89,14 @@ class consistent(CavatModule):
         # - intervals, a set of names of intervals present in the graph;
         # - tlinks, a set of 4-tuples, where each 4-tuple represents a tlink, as 4 strings - arg1, reltype, arg2, id
         # provide tuples for fastest processing, though any set type will work (e.g. tuple(intervals) tuple(tlinks) is superior)
-        
+
         self.database = {}
         self.agenda = {}
-        
+
+        if self.superVerbose:
+            for tlink in tlinks:
+                print tlink
+
         # populate database with before relation that establishes proper intervals
         for intervalName in intervals:
             assertionLabel = intervalName + '_1.' + intervalName + '_2'
