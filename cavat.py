@@ -2,6 +2,7 @@
 
 # basic requirements
 import os
+import shutil
 import sys
 import string
 
@@ -47,6 +48,24 @@ else:
     print "# CAVaT Corpus Analysis and Validation for TimeML"
     print "# Version:  %s   Support:  leon@dcs.shef.ac.uk" % (str(cavatVersion))
 
+
+
+# first time execution?
+if not os.path.isfile('cavat.ini'):
+    # assume that this is a fresh install, that the error 
+    try:
+            input = raw_input('! Could not open "cavat.ini". Is this your first time running CAVaT on this system? [Yn]: ')
+    except:
+        sys.exit()
+
+    if input.lower() in ('y', ''):
+        try:
+            shutil.copy('cavat.ini-default', 'cavat.ini')
+        except:
+            sys.exit('! Failed to copy default cavat.ini-default to cavat.ini.' )
+        
+        print '# Copied default config file into cavat.ini'
+    
 
 
 # load ini file
