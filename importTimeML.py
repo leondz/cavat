@@ -45,10 +45,12 @@ class ImportTimeML:
     posInSentence = 0
     parsedText = ''
     trailingSpace = False
+    
+    commitEveryDoc = False
 
     sentenceDetector = nltk.data.load('tokenizers/punkt/english.pickle') 
 
-    
+
     def cleanText(self, text):
         text = text.replace('. . .', '...') # SJMN doc
         text = text.replace('Inc.', 'Inc')  # wsj_0928
@@ -147,6 +149,8 @@ class ImportTimeML:
 
     def importCorpusToDb(self,  directory,  dbName):
         # global vars
+
+        directory = os.path.expanduser(directory)
 
         print >> sys.stderr,  '==============================================================='
         print >> sys.stderr,  'Reading from ' + directory
@@ -413,7 +417,7 @@ class ImportTimeML:
 
                 db.cursor.execute('INSERT INTO info(`key`, `data`) VALUES(?, ?)',  (key, data))
         
-        if db.engine == 'sqlite':
+        if db.engine == 'sqlite' and self.commitEveryDoc:
             db.conn.commit()
 
 
