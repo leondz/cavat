@@ -401,7 +401,7 @@ while not finishedProcessing:
         
         if t.use:
             # code for db switching
-            if db.changeDb(dbName):
+            if db.changeDb(t.database):
                 print "# Corpus database changed to " + t.database
                 # do a version check here
                 
@@ -418,6 +418,7 @@ while not finishedProcessing:
                 elif dbVersion > db.version:
                     errorMsg('Database was created with a newer version of CAVaT, not all checks or queries may work.')
                 
+                dbName = t.database
                 
                 continue
             
