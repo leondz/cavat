@@ -1,6 +1,7 @@
 [cavat]
-dbhost=localhost
-dbuser=timebank
-dbpass=timebank
-dbprefix=timebank
-dbname=timebank
+dbtype=sqlite
+dbprefix=~/.cavat/
+dbname=
+dbhost=
+dbuser=
+dbpass=

@@ -51,6 +51,17 @@ def connect(config):
         return mysql_connect(dbHost,  dbUser, dbPass)
 
     if engine == 'sqlite':
+        # expand ~
+        prefix = os.path.expanduser(prefix)
+        
+        # check to see if dir exists (prefix is a path to the db dir)
+        try:
+            if not os.path.exists(prefix):
+                os.makedirs(prefix)
+        except:
+            print '! Could not create directory: ' + prefix
+            return False
+        
         return sqlite_connect()
 
 
@@ -89,14 +100,6 @@ def changeDb(dbName):
 def sqlite_changeDb(dbname):
     
     global prefix,  conn,  cursor
-    
-    # check to see if dir exists (prefix is a path to the db dir)
-    try:
-        if not os.path.exists(prefix):
-            os.makedirs(prefix)
-    except:
-        print '! Could not create directory: ' + prefix
-        return False
 
     import sqlite3
 
@@ -145,6 +148,9 @@ def listCorpora():
     
     global engine,  prefix,  cursor
     
+    if cavatDebug.debug:
+        print 'Prefix is', prefix
+    
     corporaList = []
     
     if engine == 'mysql':
@@ -163,6 +169,9 @@ def listCorpora():
         corporaList = os.listdir(prefix)
 
     corporaList.sort
+    
+    if cavatDebug.debug:
+        print corporaList
 
     return corporaList
 
