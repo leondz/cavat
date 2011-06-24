@@ -103,6 +103,9 @@ def sqlite_changeDb(dbname):
 
     import sqlite3
 
+    if cavatDebug.debug:
+        print 'Prefix:', prefix, 'DB name:', dbname
+
     try:
         conn = sqlite3.connect(os.path.join(prefix,  dbname))
     except Exception,  e:
