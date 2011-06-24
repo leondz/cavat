@@ -22,13 +22,16 @@ class agenda():
         
         self.cursor = self.connection.cursor()
     
+    def __str__(self):
+        outstring = 'size=' + str(self.len()) + ': '
+        keys = self.keys()
+        for key in keys:
+            outstring += ' '.join((key[0], self.val(key[0], key[1]), key[1])) + ';  '
+        return outstring
     
     def keys(self):
-        self.cursor.execute('select arg1 || "." || arg2 from agenda')
-        keys = set()
-        for result in self.cursor.fetchall():
-            keys.add(result[0])
-        return keys
+        self.cursor.execute('select arg1, arg2 from agenda')
+        return self.cursor.fetchall()
     
     def pop(self):
         # like dictionary.popitem()
@@ -94,26 +97,25 @@ class consistent(CavatModule):
     failReason = ''
     
     
-    def addToAgenda(self,  fact):
+    def addToAgenda(self,  arg1, arg2, val):
         
-        args = fact[0].split('.')
-        (arg1, arg2) = args
-        reversed = args[1] + '.' + args[0]
+        args = (arg1, arg2)
+        reversed = (arg2, arg1)
         
-        if args[0] == args[1] and fact[1] != '=':
+        if arg1 == arg2 and val != '=':
             return False
         
         # check for presence of fact in agenda or database. return true if it's already there.
-        if fact[0] in self.database.keys():
-            if self.database.val(arg1, arg2) != fact[1]:
+        if (args) in self.database.keys():
+            if self.database.val(arg1, arg2) != val:
                 if self.superVerbose:
                     self.failReason = "Already asserted on database that relation is " + self.database.val(arg1, arg2)
                 return False
             else:
                 return True
         
-        if fact[0] in self.agenda.keys():
-            if self.agenda.val(arg1, arg2) != fact[1]:
+        if (args) in self.agenda.keys():
+            if self.agenda.val(arg1, arg2) != val:
                 if self.superVerbose:
                     self.failReason = "Already asserted on agenda that relation is " + self.agenda.val(arg1, arg2)
                 return False
@@ -121,23 +123,23 @@ class consistent(CavatModule):
                 return True
         
         if reversed in self.agenda.keys():
-            if self.agenda.val(arg2, arg1) == fact[1] and fact[1] != '=':
+            if self.agenda.val(arg2, arg1) == val and val != '=':
                 if self.superVerbose:
-                    self.failReason = 'Relation already exists on agenda in opposite direction, ' + reversed + ' ' + self.agenda.val(arg2, arg1)
+                    self.failReason = 'Relation already exists on agenda in opposite direction, ' + arg2 +' ' + arg1 + ' ' + self.agenda.val(arg2, arg1)
                 return False
             else:
                 return True
         
         if reversed in self.database.keys():
-            if self.database.val(arg2, arg1) == fact[1] and fact[1] != '=':
+            if self.database.val(arg2, arg1) == val and val != '=':
                 if self.superVerbose:
-                    self.failReason = 'Relation already exists on database in opposite direction, ' + reversed + ' ' + self.database.val(arg2, arg1)
+                    self.failReason = 'Relation already exists on database in opposite direction, ' + arg2 +' ' + arg1 + ' ' + self.database.val(arg2, arg1)
                 return False
             else:
                 return True
         
         # add it
-        self.agenda.set(arg1, arg2, fact[1])
+        self.agenda.set(arg1, arg2, val)
         
         return True
 
@@ -175,13 +177,13 @@ class consistent(CavatModule):
             for k,  v in assertions.iteritems():
                 k = k.replace('a',  tlink[0] + '_')
                 k = k.replace('b',  tlink[2] + '_')
+                (k1, k2) = k.split('.')
                 
-                assertion = [k,  v]
                 if self.superVerbose:
-                    print 'TLINK', tlink[3],   tlink[0],  tlink [1],  tlink[2], ' suggests ',  k,  v
-                    print "# Asserting " + str(assertion)
+                    print 'TLINK', tlink[3],   tlink[0],  tlink [1],  tlink[2], ' suggests ',  k1, k2,  v
+                    print "# Asserting ", k1, k2, v
                 
-                if self.addToAgenda(assertion):
+                if self.addToAgenda(k1, k2, v):
                     continue
                     
                 else:
@@ -216,11 +218,11 @@ class consistent(CavatModule):
                 [p1,  p2] = [arg1, arg2]
                 r1 = value
                 
-                [p3,  p4] = dbkey.split('.')
+                [p3,  p4] = dbkey
                 r2 = self.database.val(p3, p4)
                 
                 
-                print dbkey, self.database.val(p3, p4)
+#                print dbkey, self.database.val(p3, p4)
                 
                 if p2 != p3:
                 
@@ -251,10 +253,9 @@ class consistent(CavatModule):
                 if self.superVerbose:
                     print 'new rule:  %s %s %s  (because  %s %s %s  ^  %s %s %s )' % (p1,  r3,  p4,  p1,  r1,  p2,  p3,  r2,  p4)
                 
-                if not self.addToAgenda([propositionKey,  r3]):
-                    args = propositionKey.split('.')
+                if not self.addToAgenda(p1, p4,  r3):
 
-                    self.failReason = "Inconsistent closure - could not assert (%s %s %s)" % (args[0],  r3,  args[1])
+                    self.failReason = "Inconsistent closure - could not assert (%s %s %s)" % (p1,  r3,  p4)
                     return False
 
                 else:
