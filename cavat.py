@@ -486,7 +486,8 @@ while not finishedProcessing:
                 # restore stdout
                     sys.stdout = sys.__stdout__
             
-            db.changeDb(dbName) # import will have mangled this; reset it.
+            if dbName:
+                db.changeDb(dbName) # import will have mangled this; reset it.
             
             if not e:
                 print '# Corpus ' + t.database + ' imported. Enter "corpus use ' + t.database + '" to start using it.'
