@@ -45,6 +45,7 @@ class ImportTimeML:
     posInSentence = 0
     parsedText = ''
     trailingSpace = False
+    
     commitEveryDoc = False
 
     # punkt may cause extra splits on some combinations of spaces and punctuation; we will compensate for these.
@@ -152,6 +153,8 @@ class ImportTimeML:
 
     def importCorpusToDb(self,  directory,  dbName):
         # global vars
+
+        directory = os.path.expanduser(directory)
 
         print >> sys.stderr,  '==============================================================='
         print >> sys.stderr,  'Reading from ' + directory

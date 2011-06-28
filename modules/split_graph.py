@@ -124,6 +124,14 @@ class split_graph(CavatModule):
         
         return graphs
 
+
+    def getTlinks(self, doc_id):
+        if not runQuery('SELECT arg1, arg2 FROM tlinks WHERE doc_id = ' + str(doc_id)):
+            return 
+        
+        tlinks = db.cursor.fetchall()
+        return tlinks
+
     def checkDocument(self,  doc_id):
 
         self.superVerbose = cavatDebug.debug
@@ -141,10 +149,7 @@ class split_graph(CavatModule):
         # -   if we find a match, merge the two piles
         # when we've added all the tlinks, we will have a list containing dicts of separate subgraphs. Look up TLINK IDs at this point for output.
         
-        if not runQuery('SELECT arg1, arg2 FROM tlinks WHERE doc_id = ' + doc_id):
-            return 
-        
-        tlinks = db.cursor.fetchall()
+        tlinks = self.getTlinks(doc_id)
         
         graphs = self.findSplitGraphs(tlinks)
         

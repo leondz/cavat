@@ -2,6 +2,64 @@ from cavatModule import CavatModule
 import db
 from db import runQuery
 import cavatDebug
+import sqlite3
+
+class agenda():
+
+    connection = None
+    cursor = None
+    name = None
+
+    def __init__(self):
+        self.connection = sqlite3.connect(':memory:')
+        
+        self.connection.isolation_level = None
+        
+        self.connection.execute('create table agenda (arg1, arg2, val)')
+        self.connection.execute('create unique index args on agenda (arg1, arg2)')
+        self.connection.execute('create index arg1 on agenda (arg1)')
+        self.connection.execute('create index arg2 on agenda (arg2)')
+        
+        self.cursor = self.connection.cursor()
+    
+    def __str__(self):
+        outstring = 'size=' + str(self.len()) + ': '
+        keys = self.keys()
+        for key in keys:
+            outstring += ' '.join((key[0], self.val(key[0], key[1]), key[1])) + ';  '
+        return outstring
+    
+    def keys(self):
+        self.cursor.execute('select arg1, arg2 from agenda')
+        return self.cursor.fetchall()
+    
+    def pop(self):
+        # like dictionary.popitem()
+        self.cursor.execute('select * from agenda limit 0,1')
+        tlink = self.cursor.fetchone()
+
+        if tlink:
+            self.cursor.execute('delete from agenda where arg1 = ? and arg2 = ?', (tlink[0], tlink[1]))
+            return tlink
+        else:
+            return None
+    
+    def val(self, arg1, arg2):
+        # look up a value
+        
+        self.cursor.execute('select val from agenda where (arg1 = ? and arg2 = ?)', (arg1, arg2))
+        val = self.cursor.fetchone()
+        if not val:
+            return None
+        else:
+            return val[0]
+    
+    def set(self, arg1, arg2, val):
+        self.cursor.execute('insert or ignore into agenda(arg1, arg2, val) values (?, ?, ?)', (arg1, arg2, val))
+
+    def len(self):
+        self.cursor.execute('select * from agenda')
+        return len(self.cursor.fetchall())
 
 class consistent(CavatModule):
     
@@ -31,55 +89,57 @@ class consistent(CavatModule):
                                         'during_inv': {'a1.b1':'=',  'a2.b2':'='}
                                         }
 
-    database = {} # hash keyed by arg1.arg2, for rapid lookup; value is '<' or '='. intervals boundeb by e.g. ei122_1 - ei122_2
-    agenda = {}
+    database = None 
+    agenda = None
+
     
+
     failReason = ''
     
     
-    def addToAgenda(self,  fact):
+    def addToAgenda(self,  arg1, arg2, val):
         
-        args = fact[0].split('.')
-        reversed = args[1] + '.' + args[0]
+        args = (arg1, arg2)
+        reversed = (arg2, arg1)
         
-        if args[0] == args[1] and fact[1] != '=':
+        if arg1 == arg2 and val != '=':
             return False
         
         # check for presence of fact in agenda or database. return true if it's already there.
-        if fact[0] in self.database.keys():
-            if self.database[fact[0]] != fact[1]:
+        if (args) in self.database.keys():
+            if self.database.val(arg1, arg2) != val:
                 if self.superVerbose:
-                    self.failReason = "Already asserted on database that relation is " + self.database[fact[0]]
+                    self.failReason = "Already asserted on database that relation is " + self.database.val(arg1, arg2)
                 return False
             else:
                 return True
         
-        if fact[0] in self.agenda.keys():
-            if self.agenda[fact[0]] != fact[1]:
+        if (args) in self.agenda.keys():
+            if self.agenda.val(arg1, arg2) != val:
                 if self.superVerbose:
-                    self.failReason = "Already asserted on agenda that relation is " + self.agenda[fact[0]]
+                    self.failReason = "Already asserted on agenda that relation is " + self.agenda.val(arg1, arg2)
                 return False
             else:
                 return True
         
         if reversed in self.agenda.keys():
-            if self.agenda[reversed] == fact[1] and fact[1] != '=':
+            if self.agenda.val(arg2, arg1) == val and val != '=':
                 if self.superVerbose:
-                    self.failReason = 'Relation already exists on agenda in opposite direction, ' + reversed + ' ' + self.agenda[reversed]
+                    self.failReason = 'Relation already exists on agenda in opposite direction, ' + arg2 +' ' + arg1 + ' ' + self.agenda.val(arg2, arg1)
                 return False
             else:
                 return True
         
         if reversed in self.database.keys():
-            if self.database[reversed] == fact[1] and fact[1] != '=':
+            if self.database.val(arg2, arg1) == val and val != '=':
                 if self.superVerbose:
-                    self.failReason = 'Relation already exists on database in opposite direction, ' + reversed + ' ' + self.database[reversed]
+                    self.failReason = 'Relation already exists on database in opposite direction, ' + arg2 +' ' + arg1 + ' ' + self.database.val(arg2, arg1)
                 return False
             else:
                 return True
         
         # add it
-        self.agenda[fact[0]] = fact[1]
+        self.agenda.set(arg1, arg2, val)
         
         return True
 
@@ -89,17 +149,22 @@ class consistent(CavatModule):
         # - intervals, a set of names of intervals present in the graph;
         # - tlinks, a set of 4-tuples, where each 4-tuple represents a tlink, as 4 strings - arg1, reltype, arg2, id
         # provide tuples for fastest processing, though any set type will work (e.g. tuple(intervals) tuple(tlinks) is superior)
-        
-        self.database = {}
-        self.agenda = {}
-        
+
+        self.database = agenda()
+        self.agenda = agenda()
+
+        if self.superVerbose:
+            for tlink in tlinks:
+                print tlink
+
         # populate database with before relation that establishes proper intervals
         for intervalName in intervals:
-            assertionLabel = intervalName + '_1.' + intervalName + '_2'
-            self.database[assertionLabel] = '<'
+            arg1 = intervalName + '_1'
+            arg2 = intervalName + '_2'
+            self.database.set(arg1, arg2, '<')
             
             if self.superVerbose:
-                print "# Adding " + assertionLabel + ' <'
+                print "# Adding " , arg1, arg2, ' <'
        
         # add tlinks to agenda
         for tlink in tlinks:
@@ -112,13 +177,13 @@ class consistent(CavatModule):
             for k,  v in assertions.iteritems():
                 k = k.replace('a',  tlink[0] + '_')
                 k = k.replace('b',  tlink[2] + '_')
+                (k1, k2) = k.split('.')
                 
-                assertion = [k,  v]
                 if self.superVerbose:
-                    print 'TLINK', tlink[3],   tlink[0],  tlink [1],  tlink[2], ' suggests ',  k,  v
-                    print "# Asserting " + str(assertion)
+                    print 'TLINK', tlink[3],   tlink[0],  tlink [1],  tlink[2], ' suggests ',  k1, k2,  v
+                    print "# Asserting ", k1, k2, v
                 
-                if self.addToAgenda(assertion):
+                if self.addToAgenda(k1, k2, v):
                     continue
                     
                 else:
@@ -138,23 +203,26 @@ class consistent(CavatModule):
             print 'Initial agenda:',  self.agenda
             print 'Initial database:',  self.database
         
-        while len(self.agenda):
+        while self.agenda.len():
             if self.superVerbose:
                 print '-- database',  self.database
                 print '-- agenda',  self.agenda
-            (agendakey,  value) = self.agenda.popitem()
+            (arg1, arg2,  value) = self.agenda.pop()
             
             if self.superVerbose:
-                print 'processing',  agendakey,  value
+                print 'processing',  arg1, arg2,  value
             
             for dbkey in self.database.keys():
                 
                 # reset these for each calculation
-                [p1,  p2] = agendakey.split('.')
+                [p1,  p2] = [arg1, arg2]
                 r1 = value
                 
-                [p3,  p4] = dbkey.split('.')
-                r2 = self.database[dbkey]
+                [p3,  p4] = dbkey
+                r2 = self.database.val(p3, p4)
+                
+                
+#                print dbkey, self.database.val(p3, p4)
                 
                 if p2 != p3:
                 
@@ -185,14 +253,13 @@ class consistent(CavatModule):
                 if self.superVerbose:
                     print 'new rule:  %s %s %s  (because  %s %s %s  ^  %s %s %s )' % (p1,  r3,  p4,  p1,  r1,  p2,  p3,  r2,  p4)
                 
-                if not self.addToAgenda([propositionKey,  r3]):
-                    args = propositionKey.split('.')
+                if not self.addToAgenda(p1, p4,  r3):
 
-                    self.failReason = "Inconsistent closure - could not assert (%s %s %s)" % (args[0],  r3,  args[1])
+                    self.failReason = "Inconsistent closure - could not assert (%s %s %s)" % (p1,  r3,  p4)
                     return False
 
                 else:
-                    self.database[agendakey] = value
+                    self.database.set(arg1, arg2, value)
 
         return True
     

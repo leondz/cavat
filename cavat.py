@@ -2,6 +2,7 @@
 
 # basic requirements
 import os
+import shutil
 import sys
 import string
 
@@ -47,6 +48,24 @@ else:
     print "# CAVaT Corpus Analysis and Validation for TimeML"
     print "# Version:  %s   Support:  leon@dcs.shef.ac.uk" % (str(cavatVersion))
 
+
+
+# first time execution?
+if not os.path.isfile('cavat.ini'):
+    # assume that this is a fresh install, that the error 
+    try:
+            input = raw_input('! Could not open "cavat.ini". Is this your first time running CAVaT on this system? [Yn]: ')
+    except:
+        sys.exit()
+
+    if input.lower() in ('y', ''):
+        try:
+            shutil.copy('cavat.ini-default', 'cavat.ini')
+        except:
+            sys.exit('! Failed to copy default cavat.ini-default to cavat.ini.' )
+        
+        print '# Copied default config file into cavat.ini'
+    
 
 
 # load ini file
@@ -401,7 +420,7 @@ while not finishedProcessing:
         
         if t.use:
             # code for db switching
-            if db.changeDb(dbName):
+            if db.changeDb(t.database):
                 print "# Corpus database changed to " + t.database
                 # do a version check here
                 
@@ -418,6 +437,7 @@ while not finishedProcessing:
                 elif dbVersion > db.version:
                     errorMsg('Database was created with a newer version of CAVaT, not all checks or queries may work.')
                 
+                dbName = t.database
                 
                 continue
             
@@ -486,7 +506,8 @@ while not finishedProcessing:
                 # restore stdout
                     sys.stdout = sys.__stdout__
             
-            db.changeDb(dbName) # import will have mangled this; reset it.
+            if dbName:
+                db.changeDb(dbName) # import will have mangled this; reset it.
             
             if not e:
                 print '# Corpus ' + t.database + ' imported. Enter "corpus use ' + t.database + '" to start using it.'
