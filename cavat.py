@@ -807,12 +807,12 @@ while not finishedProcessing:
     
     
     elif t.action == 'browse':
+        if not dbName:
+            errorMsg('Please select a corpus with "corpus use" first; "corpus list" will show which corpora are available.')
+            continue
+
         if t.doc:
-            
-            if not dbName:
-                errorMsg('Please select a corpus with "corpus use" first; "corpus list" will show which corpora are available.')
-                continue
-            
+    
             if t.list:
                 if not db.runQuery('SELECT id, docname FROM documents ORDER BY id ASC'):
                     continue
@@ -897,6 +897,12 @@ while not finishedProcessing:
                     outputBrowse(browsed,  t.tag,  t.format)
                 else:
                     outputBrowse(browsed,  t.tag)
+        
+        elif t.sentence:
+            if not db.runQuery('SELECT text FROM sentences WHERE doc_id = %d AND sentenceID = %d' % (cavatBrowse.doc[dbName], int(t.id))):
+                continue
+            
+            print db.cursor.fetchone()[0].decode('utf-8')
         
     else:
         errorMsg("Unsupported command; please enable debug ('debug on'), try again, and contact support with the output.")
