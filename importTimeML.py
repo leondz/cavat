@@ -47,6 +47,7 @@ class ImportTimeML:
 
     sentenceDetector = nltk.data.load('tokenizers/punkt/english.pickle') 
 
+    cData = ''
     
     def cleanText(self, text):
         text = text.replace('. . .', '...') # SJMN doc
@@ -89,7 +90,7 @@ class ImportTimeML:
 
     def endElement(self,  name):
         if self.inTag:
-            self.tagText[elementID] = cData
+            self.tagText[elementID] = self.cData
             self.inTag = False
 
 
@@ -102,8 +103,7 @@ class ImportTimeML:
             print '|' + data + '|'
             self.parsedText += 'x'*punktCompensation
         if self.inTag:
-            global cData
-            cData = data
+            self.cData = unicode(data)
 
 
     def insertNodes(self,  nodes,  attribs,  table,  tlinks=False):
@@ -131,7 +131,7 @@ class ImportTimeML:
             # one of either valueFromFunction or value is set
             if 'tid' in attribs:
                 if node.hasAttribute('valueFromFunction'):
-                    nodeData['value'] = node.getAttribute['valueFromFunction']
+                    nodeData['value'] = node.getAttribute('valueFromFunction')
 
             # different attribute names are used for timexs and events, occuring as arg1 and arg2 of a TLINK. let's call them all arg1 & arg2
             if tlinks:
@@ -149,7 +149,7 @@ class ImportTimeML:
             try:
                 db.cursor.execute(sql)
             except Exception,  e:
-                print sql,  str(e)
+                print sql.encode('utf-8'), str(e)
                 sys.exit()
 
 
@@ -261,7 +261,7 @@ class ImportTimeML:
             alinkNodes = timemldoc.getElementsByTagName('ALINK')
 
             eventAttribs = ['eid',  'class']
-            makeInstanceAttribs = ['eiid',  'eventID',  'signalID',  'pos',  'tense',  'aspect',  'cardinality',  'polarity',  'modality', 'vform', 'mood']
+            makeInstanceAttribs = ['eiid',  'eventID',  'signalID',  'pos',  'tense',  'aspect',  'cardinality',  'polarity',  'modality', 'vform', 'mood', 'pred']
             timexAttribs = ['tid', 'type',  'functionInDocument',  'beginPoint',  'endPoint',  'quant',  'freq',  'temporalFunction',  'value',  'mod',  'anchorTimeID']
             signalAttribs = ['sid']
             tlinkAttribs = ['lid',  'origin',  'signalID',  'relType']

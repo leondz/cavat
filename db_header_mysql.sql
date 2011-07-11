@@ -64,14 +64,15 @@ CREATE TABLE IF NOT EXISTS `instances` (
   `eiid` varchar(100) NOT NULL,
   `eventID` varchar(100) NOT NULL,
   `signalID` varchar(100) default NULL,
-  `pos` enum('ADJECTIVE','NOUN','VERB','PREPOSITION','OTHER') NOT NULL,
-  `tense` enum('FUTURE','INFINITIVE','PAST','PASTPART','PRESENT','PRESPART','NONE') NOT NULL,
-  `aspect` enum('PROGRESSIVE','PERFECTIVE','PERFECTIVE_PROGRESSIVE','NONE') NOT NULL,
+  `pos` enum('ADJECTIVE','NOUN','VERB','PREPOSITION','OTHER') default NULL,
+  `tense` enum('FUTURE','INFINITIVE','PAST','PASTPART','PRESENT','PRESPART','NONE') default NULL,
+  `aspect` enum('PROGRESSIVE','PERFECTIVE','PERFECTIVE_PROGRESSIVE','NONE') default NULL,
   `cardinality` varchar(100) default NULL,
   `polarity` enum('NEG','POS') NOT NULL,
   `modality` varchar(100) default NULL,
   `vform` varchar(100) default NULL,
   `mood` varchar(100) default NULL,
+  `pred` varchar(100) default NULL,
   UNIQUE KEY `doc_id_2` (`doc_id`,`eiid`),
   KEY `doc_id` (`doc_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -163,6 +164,7 @@ CREATE TABLE IF NOT EXISTS `slinks` (
 CREATE TABLE IF NOT EXISTS `alinks` (
   `doc_id` int(10) unsigned NOT NULL,
   `lid` varchar(100) NOT NULL,
+  `origin` text,
   `signalID` varchar(100) default NULL,
   `eventInstanceID` varchar(100) NOT NULL,
   `relType` enum('INITIATES', 'CULMINATES', 'TERMINATES', 'CONTINUES', 'REINITIATES') NOT NULL,

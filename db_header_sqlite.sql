@@ -22,14 +22,15 @@ CREATE TABLE IF NOT EXISTS `instances` (
   `eiid` varchar(100) NOT NULL,
   `eventID` varchar(100) NOT NULL,
   `signalID` varchar(100) default NULL,
-  `pos` text  NOT NULL,
-  `tense` text  NOT NULL,
-  `aspect` text  NOT NULL,
+  `pos` varchar(100) default NULL,
+  `tense` varchar(100) default NULL,
+  `aspect` varchar(100) default NULL,
   `cardinality` varchar(100) default NULL,
-  `polarity` text  NOT NULL,
+  `polarity` varchar(100) default NULL,
   `modality` varchar(100) default NULL,
   `vform` varchar(100) default NULL,
-  `mood` varchar(100) default NULL
+  `mood` varchar(100) default NULL,
+  `pred` varchar(100) default NULL
 );
 CREATE TABLE IF NOT EXISTS `signals` (
   `doc_id` int  NOT NULL,
@@ -78,6 +79,7 @@ CREATE TABLE IF NOT EXISTS `slinks` (
 CREATE TABLE IF NOT EXISTS `alinks` (
   `doc_id` int  NOT NULL,
   `lid` varchar(100) NOT NULL,
+  `origin` text,
   `signalID` varchar(100) default NULL,
   `eventInstanceID` varchar(100) NOT NULL,
   `relType` text  NOT NULL,
