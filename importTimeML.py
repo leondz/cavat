@@ -5,14 +5,8 @@ import sys
 # only run this check if executed as a script 
 # goal is to avoid doing complex imports at command line if we're just going to print help and quit
 if __name__ == '__main__':
-
-    if (len(sys.argv) != 3) or sys.argv[1] == '-h':
-        print 'Script to take a directory of TimeML files and load them into a local MySQL database'
-        print 'Usage: timeml_to_db.py <directory> <dbName>'
-        print '         <directory> - a path ending in a slash to the TimeML data directory'
-        print '         <dbName>    - database to dump the data in (will be emptied when the script is run, without confirmation); the prefix "timebank_" is automatically prepended'
-        print 'NB: Login details for MySQL are set in the code'
-        sys.exit()
+    print 'To be called by CAVaT only.'
+    sys.exit()
 
 
 import db
@@ -116,6 +110,7 @@ class ImportTimeML:
 
         for node in nodes:
             
+            # nodedata will be populated from the node using the list of predefined node attributes passed in 'attribs'
             nodeData = {}
             
             # fill all attribute fields
@@ -123,7 +118,16 @@ class ImportTimeML:
             for attrib in attribs:
                 if node.hasAttribute(attrib):
                     nodeData[attrib] = node.getAttribute(attrib)
-            
+
+            # for each artificial instance, fill empty eiid and eventID with eid
+            if table == 'instances':
+                # does the node have an eid? this is our clue that instances has been copied from events
+                if node.hasAttribute('eid'):
+                    if 'eiid' not in nodeData.keys():
+                        nodeData['eiid'] = node.getAttribute('eid')
+                    if 'eventID' not in nodeData.keys():
+                        nodeData['eventID'] = node.getAttribute('eid')
+
             # one of either valueFromFunction or value is set
             if 'tid' in attribs:
                 if node.hasAttribute('valueFromFunction'):
@@ -238,7 +242,7 @@ class ImportTimeML:
             sentences = self.sentenceDetector.tokenize(self.bodyText)
             sentences[0] = sentences[0].lstrip()
             for i,  sentence in enumerate(sentences):
-                db.cursor.execute('INSERT INTO sentences(doc_id, sentenceID, text) VALUES(?, ?, ?)',  (self.doc_id,  i,  sentence))
+                db.cursor.execute('INSERT INTO sentences(doc_id, sentenceID, text) VALUES(?, ?, ?)',  (self.doc_id,  i,  sentence.decode('utf-8')))
 
             # get minidom data - element attribute cataloguing
 
@@ -263,6 +267,12 @@ class ImportTimeML:
             tlinkAttribs = ['lid',  'origin',  'signalID',  'relType']
             slinkAttribs = ['lid',  'origin',  'signalID',  'relType',  'eventInstanceID',  'subordinatedEventInstance']
             alinkAttribs = ['lid',  'origin',  'signalID',  'relType',  'eventInstanceID',  'relatedToEventInstance']
+
+            if len(makeInstanceNodes) == 0 and len(eventNodes) > 0:
+                # assume that makeinstance info is listed on events; copy events to instances
+                print 'EVENTs are present, but there are no MAKEINSTANCE elements; entering EVENT-only mode'
+                # duplicate event data into makeinstance data
+                makeInstanceNodes = xml.dom.minicompat.NodeList(eventNodes)
 
             self.insertNodes(eventNodes,  eventAttribs,  'events')
             self.insertNodes(makeInstanceNodes,  makeInstanceAttribs,  'instances')
@@ -340,7 +350,8 @@ class ImportTimeML:
                         pos = 'OTHER'
 
                     # work out lemma; get first instance of this event and take pos from it, then call wordnet lemmatize
-                    lemmatext = string.lower(string.strip(str(self.tagText[tag]))).translate(tTable,  string.punctuation)
+                    lemmatext = self.tagText[tag]
+                    lemmatext = string.lower(string.strip(lemmatext))
                     if pos not in timebankToWordnet.keys():
                         wnPos = 'n' # default pos
                     else:
@@ -391,7 +402,7 @@ class ImportTimeML:
                 db.cursor.execute('UPDATE %s SET text = ? WHERE %s = ? AND doc_id = ?' % 
                                   (table,  idColumn),  (self.tagText[tag],  tag,  self.doc_id))
             
-            db.cursor.execute('UPDATE documents SET body = ? WHERE id = ?',  (self.bodyText, self.doc_id))
+            db.cursor.execute('UPDATE documents SET body = ? WHERE id = ?',  (self.bodyText.decode('utf-8'), self.doc_id))
             
             if db.engine == 'sqlite' and self.commitEveryDoc:
                 db.conn.commit()
