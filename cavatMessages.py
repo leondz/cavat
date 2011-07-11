@@ -1,5 +1,6 @@
-import sys
 import math
+import sys
+
 from cavatDebug import debug
 
 def round_figures(x, n):
@@ -47,7 +48,7 @@ def outputResults(results,  reportType,  format = 'screen'):
         for row in results:
             
             # convert all entities to string
-            row = map(str, row)
+            row = map(unicode, row)
             print '"' + '","'.join(row) + '"'
         
     elif format == 'tex':
@@ -57,7 +58,7 @@ def outputResults(results,  reportType,  format = 'screen'):
         columns = len(header)
         
         # latex-escape any percentage symbols (otherwise they act as comments)
-        header = map(str,  header)
+        header = map(unicode,  header)
         header = map(latexSafe,  header)
         
         caption = reportType.capitalize() + ' of ' + header[0].replace(' "',  ' ``')
@@ -85,7 +86,7 @@ def outputResults(results,  reportType,  format = 'screen'):
                     row.append('')
             
             
-            row = map(str,  row)
+            row = map(unicode,  row)
             row = map(latexSafe,  row)
             
             print ' & '.join(row) + ' \\\\'
@@ -114,7 +115,7 @@ def outputResults(results,  reportType,  format = 'screen'):
 
         for row in results:
             
-            row = map(str,  row)
+            row = map(unicode, row)
             
             if reportType == 'list':
                 print row[0]
@@ -184,5 +185,5 @@ def outputBrowse(browsed, tag, format = 'screen'):
     if format == 'csv':
         
         print '"' + '","'.join(browsed.keys()) + '"'
-        print '"' + '","'.join(map(str, browsed.values())) + '"'
+        print '"' + '","'.join(map(unicode, browsed.values())) + '"'
         

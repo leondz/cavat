@@ -152,7 +152,7 @@ while not finishedProcessing:
     try:
         t = cavatStmt.parseString(input)
     except ParseException,  pe:
-        errorMsg('Syntax error: ' + str(pe))
+        errorMsg('Syntax error: ' + unicode(pe))
         continue
 
 
@@ -199,10 +199,10 @@ while not finishedProcessing:
         
         tag = None
         try:
-            tag = str(t.result.tag)
+            tag = unicode(t.result.tag)
         except AttributeError:
             try:
-                tag = str(t.tag)
+                tag = unicode(t.tag)
             except AttributeError:
                 errorMsg('Not sure which tag to operate on; t.tag and t.result.tag both empty. Please enable debug, enter your query again, and contact support.')
                 continue
@@ -455,7 +455,7 @@ while not finishedProcessing:
             print "\n# Info for corpus in database '" + dbName +"' (prefix is '" + db.prefix + "')\n"
             
             for row in results:
-                print str(row[0]).rjust(30,  ' ') + ":  " + row[1]
+                print unicode(row[0]).rjust(30,  ' ') + ":  " + row[1]
             
             if not db.runQuery('SELECT COUNT(*) FROM documents'):
                 continue
@@ -470,7 +470,7 @@ while not finishedProcessing:
                 
                 results = db.cursor.fetchone()
                 
-                print '# - %s %ss' % (str(results[0]).rjust(6, ' '), tag.upper())
+                print '# - %s %ss' % (unicode(results[0]).rjust(6, ' '), tag.upper())
                 
             
         elif t.import_:
@@ -499,7 +499,7 @@ while not finishedProcessing:
                     print sys.exc_info()[0],  e
                     print repr(traceback.extract_tb(sys.exc_info()[2]))
 
-                errorMsg(str(e))
+                errorMsg(unicode(e))
 
             # cleanup
             if not cavatDebug.debug:
@@ -702,14 +702,14 @@ while not finishedProcessing:
                 exec('from modules.' + moduleName + ' import ' + moduleName)
                 
             except Exception,  e:
-                errorMsg(str(e) + '. Path is ' + str(sys.path))
+                errorMsg(unicode(e) + '. Path is ' + unicode(sys.path))
                 continue
             
             # instantiate and check module compatibility
             try:
                 exec('checker = ' + moduleName + '()')
             except Exception,  e:
-                errorMsg(str(e))
+                errorMsg(unicode(e))
                 continue
             
             compatible = checker.getCompatibility(cavatVersion)
@@ -738,7 +738,7 @@ while not finishedProcessing:
                     continue
                     
                 else:
-                    sourceList = [str(cavatBrowse.doc[dbName])]
+                    sourceList = [unicode(cavatBrowse.doc[dbName])]
 
             
             docList = []
@@ -751,7 +751,7 @@ while not finishedProcessing:
                 results = db.cursor.fetchall()
                 
                 for row in results:
-                    docList.append(str(row[0]))
+                    docList.append(unicode(row[0]))
                 
             elif not sourceList[0].isdigit():
                 # it's not a document id; try to look up all strings in docList against documents.docname
@@ -766,7 +766,7 @@ while not finishedProcessing:
                         errorMsg('Document "' + source + '" not in corpus')
                         continue
                     
-                    docList.append(str(results[0]))
+                    docList.append(unicode(results[0]))
                 
                 
             elif sourceList[0].isdigit():
@@ -796,7 +796,7 @@ while not finishedProcessing:
             
             # for each doc in list, call the module
             if cavatDebug.debug:
-                print 'Running check on doc_ids: ' + str(docList)
+                print 'Running check on doc_ids: ' + unicode(docList)
 
             for doc in docList:
                 checkResult = checker.checkDocument(doc)
@@ -819,7 +819,7 @@ while not finishedProcessing:
                 
 
                 for doc_ in db.cursor.fetchall():
-                    print 'DOCUMENT',  str(doc_[0]).rjust(6), ' ', doc_[1]
+                    print 'DOCUMENT',  unicode(doc_[0]).rjust(6), ' ', doc_[1]
                 
                 continue
 
