@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+
+<TimeML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="http://timeml.org/timeMLdocs/TimeML_1.2.1.xsd">
+
+It <EVENT eid="e1">looped</EVENT>.
+
+<MAKEINSTANCE eventID="e1" eiid="ei1" tense="PAST" aspect="PERFECTIVE" polarity="POS" pos="VERB" />
+<MAKEINSTANCE eventID="e1" eiid="ei2" tense="PAST" aspect="PERFECTIVE" polarity="POS" pos="VERB" />
+
+<TLINK lid="l1" relType="INCLUDES" eventInstanceID="ei1" relatedToEventInstance="ei2" />
+
+</TimeML>
+
