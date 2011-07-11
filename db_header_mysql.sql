@@ -70,6 +70,8 @@ CREATE TABLE IF NOT EXISTS `instances` (
   `cardinality` varchar(100) default NULL,
   `polarity` enum('NEG','POS') NOT NULL,
   `modality` varchar(100) default NULL,
+  `vform` varchar(100) default NULL,
+  `mood` varchar(100) default NULL,
   UNIQUE KEY `doc_id_2` (`doc_id`,`eiid`),
   KEY `doc_id` (`doc_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

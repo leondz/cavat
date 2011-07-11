@@ -27,7 +27,9 @@ CREATE TABLE IF NOT EXISTS `instances` (
   `aspect` text  NOT NULL,
   `cardinality` varchar(100) default NULL,
   `polarity` text  NOT NULL,
-  `modality` varchar(100) default NULL
+  `modality` varchar(100) default NULL,
+  `vform` varchar(100) default NULL,
+  `mood` varchar(100) default NULL
 );
 CREATE TABLE IF NOT EXISTS `signals` (
   `doc_id` int  NOT NULL,

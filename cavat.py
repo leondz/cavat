@@ -27,7 +27,7 @@ from cavatMessages import *
 import cavatDebug
 
 
-cavatVersion = 0.22
+cavatVersion = 0.23
 db.version = cavatVersion
 
 def buildSqlWhereClause(wheres):
@@ -494,12 +494,11 @@ while not finishedProcessing:
                 db.cursor.execute('INSERT INTO info(`key`, `data`) VALUES("cavat_version", ' + str(cavatVersion) + ')')
                 db.conn.commit()
             except Exception,  e:
-                if cavatDebug.debug:
-                    import traceback
-                    print sys.exc_info()[0],  e
-                    print repr(traceback.extract_tb(sys.exc_info()[2]))
+#                if cavatDebug.debug:
+                import traceback
+                sys.stderr.write(repr(traceback.extract_tb(sys.exc_info()[2])))
 
-                errorMsg(unicode(e))
+                errorMsg(str(e))
 
             # cleanup
             if not cavatDebug.debug:

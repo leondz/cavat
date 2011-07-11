@@ -261,7 +261,7 @@ class ImportTimeML:
             alinkNodes = timemldoc.getElementsByTagName('ALINK')
 
             eventAttribs = ['eid',  'class']
-            makeInstanceAttribs = ['eiid',  'eventID',  'signalID',  'pos',  'tense',  'aspect',  'cardinality',  'polarity',  'modality']
+            makeInstanceAttribs = ['eiid',  'eventID',  'signalID',  'pos',  'tense',  'aspect',  'cardinality',  'polarity',  'modality', 'vform', 'mood']
             timexAttribs = ['tid', 'type',  'functionInDocument',  'beginPoint',  'endPoint',  'quant',  'freq',  'temporalFunction',  'value',  'mod',  'anchorTimeID']
             signalAttribs = ['sid']
             tlinkAttribs = ['lid',  'origin',  'signalID',  'relType']
@@ -408,7 +408,7 @@ class ImportTimeML:
                 db.conn.commit()
         
             print 'From SAX parse:'
-            print self.parsedText
+            print self.parsedText.encode('utf-8')
             print 'From sentences + tokenisation:'
             print ' '.join(sentences)
             
