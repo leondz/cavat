@@ -3,21 +3,15 @@ CAVaT toolkit: Corpus Analysis and Validation for TimeML
 REQUIREMENTS:
 
 Global:
-	Python 2.6.4 - 2.6.x
-	MySQL Server 5.1+
+	Python 2.6.4 - 2.x
 
 Python add-ons:
 	NLTK 2.0b2+
 	PyParsing 1.5.2+
-	MySQLdb (python-mysqldb) 1.2.2+
+	SQLite 3 (or MySQL)
 
 INSTALLATION:
-Unpack cavat into its own directory. Copy cavat.ini-default to cavat.ini, and 
-edit cavat.ini to include correct login details for your MySQL instance. The
- user that CAVaT logs in to MySQL as should have rights to create new 
-databases and edit existing ones with a prefix specified by dbPrefix. The 
-default configuration assumes that CAVaT has all privileges on databases 
-beginning "timebank_", and starts with database "timebank" ready for use.
+Unpack cavat into its own directory. Databases will be stored in ~/.cavat/ .
 
 RUNNING CAVAT:
 Change into CAVaT's main directory, and run "python cavat.py". When the system
@@ -25,8 +19,7 @@ has loaded, you should see a "cavat>" prompt. You can quit with Ctrl-C, "quit"
 or "exit".
 
 From here, if you have no corpora loaded, you may want to import one. Enter the
-following to load a TimeML corpus into the "timebank_test" database (db prefixes
-are hidden by the interactive interface):
+following to load a TimeML corpus into the "test" database:
 
 cavat> corpus import /home/user/corpus/data/ to test
 
