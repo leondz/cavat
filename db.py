@@ -28,7 +28,10 @@ def connect(config):
         import warnings
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            import MySQLdb
+            try:
+                import MySQLdb
+            except:
+                sys.exit("Couldn't load 'MySQLdb'. CAVaT requires this module in order to run. To install it under Ubuntu, try 'sudo apt-get install python-mysqldb'.")
 
         
         try:
@@ -101,7 +104,10 @@ def sqlite_changeDb(dbname):
     
     global prefix,  conn,  cursor
 
-    import sqlite3
+    try:
+        import sqlite3
+    except:
+        sys.exit("Couldn't load 'sqlite3'. CAVaT requires this module in order to run. To install it under Ubuntu, try 'sudo apt-get install python-pysqlite2'.")
 
     if cavatDebug.debug:
         print 'Prefix:', prefix, 'DB name:', dbname

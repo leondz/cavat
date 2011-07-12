@@ -13,7 +13,10 @@ import ConfigParser
 import db
 
 # for processing CAVaT commands
-from pyparsing import ParseException
+try:
+    from pyparsing import ParseException
+except:
+    sys.exit("Couldn't load 'pyparsing'. CAVaT requires this module in order to run. To install it under Ubuntu, try 'sudo apt-get install python-pyparsing'.")
 from cavatGrammar import cavatStmt,  validTags, numericFields
 import cavatGrammar
 import cavatBrowse

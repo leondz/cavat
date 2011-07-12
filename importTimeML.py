@@ -10,8 +10,11 @@ if __name__ == '__main__':
 
 
 import db
-import nltk
-import nltk.data
+try:
+    import nltk
+    import nltk.data
+except:
+    sys.exit("Couldn't load 'nltk'. CAVaT requires this module in order to run. To install it under Ubuntu, try 'sudo apt-get install python-nltk'.")    
 import os
 import re
 import string
