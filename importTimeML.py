@@ -22,6 +22,8 @@ with warnings.catch_warnings():
     warnings.simplefilter('ignore')
     from nltk.stem import wordnet as wn
 
+if db.engine == 'sqlite':
+    import sqlite3
 
 class ImportTimeML:
 
@@ -46,6 +48,8 @@ class ImportTimeML:
     punktCompensate = ['." ',  ".'' ",  '?" ',  '.) ',  "?''",  '.; ',  '."; ']
 
     sentenceDetector = nltk.data.load('tokenizers/punkt/english.pickle') 
+    
+    event_only_mode = False
 
     cData = ''
     
@@ -120,7 +124,7 @@ class ImportTimeML:
                     nodeData[attrib] = node.getAttribute(attrib)
 
             # for each artificial instance, fill empty eiid and eventID with eid
-            if table == 'instances':
+            if table == 'instances' and self.event_only_mode:
                 # does the node have an eid? this is our clue that instances has been copied from events
                 if node.hasAttribute('eid'):
                     if 'eiid' not in nodeData.keys():
@@ -148,8 +152,15 @@ class ImportTimeML:
             #print sql
             try:
                 db.cursor.execute(sql)
+            # timeml 1.3/iso transition might have two event tags with the same eid but differing eiids.
+            # this will attempt to insert events with duplicate eids but different eiids, though as instances are a copy of events, we can safely ignore duplicate event eids
+            except sqlite3.IntegrityError:
+                if self.event_only_mode and table == 'events':
+                    continue
+                    
+            # reject any constraint or db problems
             except Exception,  e:
-                print sql.encode('utf-8'), str(e)
+                print sql.encode('utf-8'), type(e), str(e)
                 sys.exit()
 
 
@@ -271,6 +282,7 @@ class ImportTimeML:
             if len(makeInstanceNodes) == 0 and len(eventNodes) > 0:
                 # assume that makeinstance info is listed on events; copy events to instances
                 print 'EVENTs are present, but there are no MAKEINSTANCE elements; entering EVENT-only mode'
+                self.event_only_mode = True
                 # duplicate event data into makeinstance data
                 makeInstanceNodes = xml.dom.minicompat.NodeList(eventNodes)
 
