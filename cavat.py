@@ -903,8 +903,11 @@ while not finishedProcessing:
         elif t.sentence:
             if not db.runQuery('SELECT text FROM sentences WHERE doc_id = %d AND sentenceID = %d' % (cavatBrowse.doc[dbName], int(t.id))):
                 continue
-            
-            print db.cursor.fetchone()[0].decode('utf-8')
+                
+            try:
+                print db.cursor.fetchone()[0].decode('utf-8')
+            except TypeError:
+                errorMsg("Couldn't find sentence %d in this document" % t.id)
         
     else:
         errorMsg("Unsupported command; please enable debug ('debug on'), try again, and contact support with the output.")
