@@ -262,8 +262,8 @@ class ImportTimeML:
 
             try:
                 timemldoc  = minidom.parse(directory+fileName)
-            except:
-                print 'Failed to parse'
+            except Exception, e:
+                print 'Failed to parse', e
                 return
 
             eventNodes = timemldoc.getElementsByTagName('EVENT')
@@ -405,12 +405,17 @@ class ImportTimeML:
                 print 'sentence', sentence,
 
                 # for token
-                offsets = wordOffset[sentence].values()
-                smallerOffsets = filter(lambda y: y <= byteOffset, offsets) # which is the largest word-offset that's less than the tag offset?
-                correctOffset = max(smallerOffsets) # store largest token-start byte-offset that's less than element start offset, that is, the offset of the word-start boundary equal-to/just-before this one
-                token = [k for k, v in wordOffset[sentence].iteritems() if v == correctOffset][0] # look up the token number
+                try:
+                    offsets = wordOffset[sentence].values()
+                except:
+                    print 'no token'
+                    token = None
+                else:
+                    smallerOffsets = filter(lambda y: y <= byteOffset, offsets) # which is the largest word-offset that's less than the tag offset?
+                    correctOffset = max(smallerOffsets) # store largest token-start byte-offset that's less than element start offset, that is, the offset of the word-start boundary equal-to/just-before this one
+                    token = [k for k, v in wordOffset[sentence].iteritems() if v == correctOffset][0] # look up the token number
 
-                print 'token', token
+                    print 'token', token
             
                 db.cursor.execute('UPDATE %s SET position = ?, sentence = ?, inSentence = ? WHERE %s = ? AND doc_id = ?' % 
                                   (table,  idColumn),  (byteOffset,  sentence,  token, tag,  self.doc_id))
