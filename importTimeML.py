@@ -48,7 +48,8 @@ class ImportTimeML:
     
     commitEveryDoc = False
 
-    encoding = 'utf-8'
+    defaultEncoding = 'utf-8'
+    encoding = ''
 
     # punkt may cause extra splits on some combinations of spaces and punctuation; we will compensate for these.
     punktCompensate = ['." ',  ".'' ",  '?" ',  '.) ',  "?''",  '.; ',  '."; ']
@@ -64,6 +65,11 @@ class ImportTimeML:
         text = text.replace('Inc.', 'Inc')  # wsj_0928
         text = text.replace('U.K.', 'UK')   # wsj_0583
         text = text.replace('p.m.', 'pm')   # NYT19980212.0019
+        text = text.replace('\xc5\x8f', 'o') # WikiWars_20110130_v102/keyinline/06_KoreanWar.key.xml
+        text = text.replace('\xc5\xad', 'u') # WikiWars_20110130_v102/keyinline/06_KoreanWar.key.xml
+        text = text.replace('\xc3\x27', 'o') # WikiWars_20110130_v102/keyinline/08_FrenchRev.key.xml
+        text = text.replace('\xc3\xa8', 'e') # WikiWars_20110130_v102/keyinline/08_FrenchRev.key.xml
+        text = text.replace('\xc3\xaa', 'e') # WikiWars_20110130_v102/keyinline/08_FrenchRev.key.xml
         # when xml elements have space on both sides, the text offsets of words in cleaned xml and cleaned plaintext will differ
         # e.g. "  fish swim." becomes " fish swim", but " <event> fish</event> swim." becomes "  fish swim"
         # to remedy this, we should take special notice of element tags that have space on both sides.
@@ -149,14 +155,15 @@ class ImportTimeML:
                     if node.hasAttribute(tlinkAttrib):
                         nodeData[self.tlinkFieldMapping[tlinkAttrib]] = node.getAttribute(tlinkAttrib)
 
-
             sql = 'INSERT INTO ' + table + ' (doc_id, `' + ('`,`'.join(nodeData.keys())) + '`) VALUES (' + str(self.doc_id)
             for key in nodeData.keys() :
                 sql += ', "' + nodeData[key] + '"'
             sql += ')'
             
-            #print sql
+            # execute sql
             try:
+                if tlinks:
+                    print sql
                 db.cursor.execute(sql)
             # timeml 1.3/iso transition might have two event tags with the same eid but differing eiids.
             # this will attempt to insert events with duplicate eids but different eiids, though as instances are a copy of events, we can safely ignore duplicate event eids
@@ -254,8 +261,9 @@ class ImportTimeML:
             # get encoding
             charset = chardet.detect(self.bodyText)
             print 'Encoding is', charset['encoding'], 'with confidence', charset['confidence']
-            if charset['confidence'] < 0.8:
-                print 'Confidence too low - using default', self.encoding
+            if charset['confidence'] < 0.7:
+                print 'Confidence too low - using default', self.defaultEncoding
+                self.encoding = self.defaultEncoding
             else:
                 self.encoding = charset['encoding']
             
@@ -277,8 +285,12 @@ class ImportTimeML:
             try:
                 timemldoc  = minidom.parse(directory+fileName)
             except Exception, e:
-                print 'Failed to parse', e
-                return
+                try:
+                    text_to_parse = open(directory+fileName).read().replace('\xc3\x27', 'o') # fix o-circumflex
+                    timemldoc  = minidom.parseString(text_to_parse)
+                except:
+                    print 'Failed to parse: ', e
+                    raise e
 
             eventNodes = timemldoc.getElementsByTagName('EVENT')
             makeInstanceNodes = timemldoc.getElementsByTagName('MAKEINSTANCE')
@@ -311,6 +323,9 @@ class ImportTimeML:
             self.insertNodes(slinkNodes,  slinkAttribs,  'slinks')
             self.insertNodes(alinkNodes,  alinkAttribs,  'alinks')
 
+            if db.engine == 'sqlite':
+                db.conn.commit()
+
 
             # get position data
             
@@ -326,8 +341,11 @@ class ImportTimeML:
 
 
             xmlData = self.cleanText(xmlData) # collapse whitespace
-            parser.Parse(xmlData) # run sax parser - includes offset calculation
-
+            try:
+                parser.Parse(xmlData) # run sax parser - includes offset calculation
+            except Exception, e:
+                print 'Failed to parse: ', e
+                raise e
             # calculate sentence offset lookup table. sentence regex always matches a 2 char string.
 
             # of the format {sentence ID : byte offset of sentence's start in document}
