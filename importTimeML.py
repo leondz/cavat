@@ -9,6 +9,7 @@ if __name__ == '__main__':
     sys.exit()
 
 
+import chardet
 import db
 try:
     import nltk
@@ -46,6 +47,8 @@ class ImportTimeML:
     trailingSpace = False
     
     commitEveryDoc = False
+
+    encoding = 'utf-8'
 
     # punkt may cause extra splits on some combinations of spaces and punctuation; we will compensate for these.
     punktCompensate = ['." ',  ".'' ",  '?" ',  '.) ',  "?''",  '.; ',  '."; ']
@@ -163,7 +166,7 @@ class ImportTimeML:
                     
             # reject any constraint or db problems
             except Exception,  e:
-                print sql.encode('utf-8'), type(e), str(e)
+                print sql.encode(self.encoding), type(e), str(e)
                 sys.exit()
 
 
@@ -244,9 +247,19 @@ class ImportTimeML:
 
             print fileName,  'as',  self.doc_id
 
-            # break into sentences
+            # load file
             timeMlFile = open(directory+fileName)
-            self.bodyText = timeMlFile.read() # load file
+            self.bodyText = timeMlFile.read()
+            
+            # get encoding
+            charset = chardet.detect(self.bodyText)
+            print 'Encoding is', charset['encoding'], 'with confidence', charset['confidence']
+            if charset['confidence'] < 0.8:
+                print 'Confidence too low - using default', self.encoding
+            else:
+                self.encoding = charset['encoding']
+            
+            # break into sentences
             self.bodyText = re.sub(r'<[^>]*?>', '', self.bodyText) # strip tags
             timeMlFile.close()
  
@@ -256,7 +269,8 @@ class ImportTimeML:
             sentences = self.sentenceDetector.tokenize(self.bodyText)
             sentences[0] = sentences[0].lstrip()
             for i,  sentence in enumerate(sentences):
-                db.cursor.execute('INSERT INTO sentences(doc_id, sentenceID, text) VALUES(?, ?, ?)',  (self.doc_id,  i,  sentence.decode('utf-8')))
+                print i, sentence
+                db.cursor.execute('INSERT INTO sentences(doc_id, sentenceID, text) VALUES(?, ?, ?)',  (self.doc_id,  i,  sentence.decode(self.encoding)))
 
             # get minidom data - element attribute cataloguing
 
@@ -422,13 +436,13 @@ class ImportTimeML:
                 db.cursor.execute('UPDATE %s SET text = ? WHERE %s = ? AND doc_id = ?' % 
                                   (table,  idColumn),  (self.tagText[tag],  tag,  self.doc_id))
             
-            db.cursor.execute('UPDATE documents SET body = ? WHERE id = ?',  (self.bodyText.decode('utf-8'), self.doc_id))
+            db.cursor.execute('UPDATE documents SET body = ? WHERE id = ?',  (self.bodyText.decode(self.encoding), self.doc_id))
             
             if db.engine == 'sqlite' and self.commitEveryDoc:
                 db.conn.commit()
         
             print 'From SAX parse:'
-            print self.parsedText.encode('utf-8')
+            print self.parsedText.encode(self.encoding)
             print 'From sentences + tokenisation:'
             print ' '.join(sentences)
             
