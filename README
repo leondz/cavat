@@ -19,7 +19,8 @@ has loaded, you should see a "cavat>" prompt. You can quit with Ctrl-C, "quit"
 or "exit".
 
 From here, if you have no corpora loaded, you may want to import one. Enter the
-following to load a TimeML corpus into the "test" database:
+following to load a TimeML corpus into the "test" database - it's important to
+include the trailing / in the path:
 
 cavat> corpus import /home/user/corpus/data/ to test
 
