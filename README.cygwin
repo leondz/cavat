@@ -22,11 +22,11 @@ the egg package for your version of Python from:
 
  http://pypi.python.org/pypi/setuptools#files
 
-E.g., for Python 2.7, choose setuptools0.6c11-py2.7.egg . Save this file into 
+E.g., for Python 2.6, choose setuptools0.6c11-py2.6.egg . Save this file into 
 your Cygwin directory tree, and then execute it:
 
- wget http://pypi.python.org/packages/2.7/s/setuptools/setuptools-0.6c11-py2.7.egg
- sh setuptools-0.6c11-py2.7.egg
+ wget http://pypi.python.org/packages/2.6/s/setuptools/setuptools-0.6c11-py2.6.egg
+ sh setuptools-0.6c11-py2.6.egg
 
 This will install Python's own package management system.
 
