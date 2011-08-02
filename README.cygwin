@@ -1,0 +1,67 @@
+CAVaT - Corpus Analysis and Validation for TimeML
+
+Here are installation instructions for CAVaT under Cygwin v1.7. We assume
+a default installation.
+
+To begin the process, you will need to add the following packages to your
+Cygwin, using the setup.exe utility (e.g. http://cygwin.com/setup.exe):
+
+ In Web:
+ - wget
+
+ In Python:
+ - python
+ - python-numpy
+
+These may have some dependencies; install those too. The Cygwin downloader
+will complete the installation of these.
+
+We will need Python "setuptools" in order to complete the installation, which 
+is not provided as a Cygwin package. In order to install it, first download
+the egg package for your version of Python from:
+
+ http://pypi.python.org/pypi/setuptools#files
+
+E.g., for Python 2.7, choose setuptools0.6c11-py2.7.egg . Save this file into 
+your Cygwin directory tree, and then execute it:
+
+ wget http://pypi.python.org/packages/2.7/s/setuptools/setuptools-0.6c11-py2.7.egg
+ sh setuptools-0.6c11-py2.7.egg
+
+This will install Python's own package management system.
+
+Next, install pyparsing. The package installation documentation can be found
+at http://pyparsing.wikispaces.com/Download+and+Installation. We'll install it
+using setuptools, using the following command:
+
+ easy_install pyparsing
+
+We'll also need to install the Python YAML tools, using setuptools:
+
+ easy_install pyyaml
+
+Finally, we need to install NLTK. Setuptools doesn't currently support nltk,
+and there is no Cygwin package, so a brief manual build is required. Visit
+http://code.google.com/p/nltk/downloads/list to see the current list of 
+downloads; a known-good version is 2.0b8, so you can save the following file
+into your Cygwin installation, and unpack it:
+
+ wget http://nltk.googlecode.com/files/nltk-2.0b8.tar.gz
+ tar zxf nltk-2.0b8.tar.gz
+
+Then, run "python setup.py install" inside the NLTK folder:
+
+ cd nltk-2.0b8
+ python setup.py install
+
+After a small amount of copying, the installation will complete, and you can
+now change directory to where you have unpacked cavat and execute it.
+
+ cd ~/cavat
+ ./cavat.py
+
+If you have any problems, please post an issue on the project website, at:
+
+  http://code.google.com/p/cavat/
+
+Thank you for using CAVaT.
