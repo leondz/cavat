@@ -156,6 +156,8 @@ while not finishedProcessing:
         t = cavatStmt.parseString(input)
     except ParseException,  pe:
         errorMsg('Syntax error: ' + unicode(pe))
+        if input.startswith('corpus import'):
+            errorMsg('Corpus directories should end with a trailing slash, and corpus names can only contain letters, numbers and special characters _ and -')
         continue
 
 

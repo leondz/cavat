@@ -32,7 +32,7 @@ browseToken = Keyword("browse",  caseless = True)
 # parameter values
 onOff = oneOf('on off',  caseless = True)
 tag = oneOf(' '.join(validTags),  caseless = True)
-alphaNums_ = Word(alphanums + "_")
+alphaNums_ = Word(alphanums + "_-")
 fileName = Word(alphanums + "_-.+%/~")
 reportType = oneOf("list distribution state",  caseless = True)
 outputFormat = oneOf("screen csv tsv tex",  caseless = True)
