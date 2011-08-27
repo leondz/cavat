@@ -15,7 +15,7 @@ class CavatModule:
 
 
     def __init__(self):
-        print '# ' + self.moduleName + ' v' + str(self.moduleVersion) + ' loaded'    
+        pass
     
     
     def startup(self,  doc_id):
