@@ -143,7 +143,6 @@ while not finishedProcessing:
     
 
     if not input:
-        errorMsg('Enter "help" to explore the command hierarchy.')
         continue
 
     if input.lower() in ("x",  "q",  "exit",  "quit"):
