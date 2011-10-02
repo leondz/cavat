@@ -50,6 +50,7 @@ if len(sys.argv) > 1 and sys.argv[1] == '-c':
 else:
     print "# CAVaT Corpus Analysis and Validation for TimeML"
     print "# Version:  %s   Support:  leon@dcs.shef.ac.uk" % (str(cavatVersion))
+    print "# Enter 'help' for on-line support."
 
 
 
@@ -570,6 +571,7 @@ while not finishedProcessing:
             print '#   debug    - Toggle debug mode'
             print '#   browse   - Show details on an object in the current corpus'           
             print '#   exit     - Leave CAVaT'
+            print '# Visit http://code.google.com/p/cavat/ for a full reference.'
             print '# Enter "help" followed by one of these to see the command syntax'
             continue
         
