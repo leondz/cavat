@@ -42,13 +42,13 @@ class tlink_loop(CavatModule):
         loopedTlinks = []
 
         # look at where we're linking an event instance to itself
-        if not runQuery('SELECT lid, relType, arg1, arg2 FROM tlinks WHERE arg1 = arg2 AND doc_id = ' + doc_id + ' ORDER BY CAST(SUBSTRING(lid,2) AS SIGNED)'):
+        if not runQuery('SELECT lid, relType, arg1, arg2 FROM tlinks WHERE arg1 = arg2 AND doc_id = ' + doc_id + ' ORDER BY CAST(SUBSTR(lid,2) AS SIGNED)'):
             return
         
         loopedTlinks = db.cursor.fetchall()
         
         # look at where we're linking an event instance to itself
-        if not runQuery('SELECT lid, reltype, arg1, arg2 FROM tlinks AS t, instances AS i1, instances AS i2 WHERE t.arg1 = i1.eiid AND t.arg2 = i2.eiid AND t.doc_id = i1.doc_id AND t.doc_id = i2.doc_id AND i1.eventID = i2.eventID AND t.doc_id = ' + doc_id + ' ORDER BY CAST(SUBSTRING(lid,2) AS SIGNED)'):
+        if not runQuery('SELECT lid, reltype, arg1, arg2 FROM tlinks AS t, instances AS i1, instances AS i2 WHERE t.arg1 = i1.eiid AND t.arg2 = i2.eiid AND t.doc_id = i1.doc_id AND t.doc_id = i2.doc_id AND i1.eventID = i2.eventID AND t.doc_id = ' + doc_id + ' ORDER BY CAST(SUBSTR(lid,2) AS SIGNED)'):
             return
         
         loopedTlinks = self.uniq(loopedTlinks + db.cursor.fetchall())
