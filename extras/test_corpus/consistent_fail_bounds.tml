@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+
+<TimeML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="http://timeml.org/timeMLdocs/TimeML_1.2.1.xsd">
+
+While boundaries are <EVENT eid="e1">placed</EVENT>, the <EVENT eid="e2">placing</EVENT> of boundaries is not the entire process.
+
+(Inconsistent document - a inc b and a sim b cannot both be asserted.)
+
+<MAKEINSTANCE eventID="e1" eiid="ei1" tense="PAST" aspect="PERFECTIVE" polarity="POS" pos="VERB" />
+<MAKEINSTANCE eventID="e2" eiid="ei2" tense="PAST" aspect="NONE" polarity="POS" pos="NOUN" />
+
+<TLINK lid="l1" relType="INCLUDES" eventInstanceID="ei1" relatedToEventInstance="ei2" />
+<TLINK lid="l2" relType="SIMULTANEOUS" eventInstanceID="ei1" relatedToEventInstance="ei2" />
+
+</TimeML>
+

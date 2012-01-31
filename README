@@ -1,0 +1,103 @@
+CAVaT toolkit: Corpus Analysis and Validation for TimeML
+
+
+LICENSE:
+
+   Copyright 2009-2012 Leon Derczynski
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+To cite or attribute CAVaT in your work, please include the following
+information:
+
+@inproceedings{derczynski2010cavat,
+  title = {{Analysing Temporally Annotated Corpora with CAVaT}},
+  booktitle = {Proceedings of the 7th International Conference on Language Resources and Evaluation},
+  year = {2010},
+  author = {Derczynski, L. and Gaizauskas, R.},
+  pages = {398--404}
+}
+
+
+REQUIREMENTS:
+
+Global:
+	Python 2.6.4 - 2.x
+
+Python add-ons:
+	NLTK 2.0b2+
+	PyParsing 1.5.2+
+	SQLite 3 (or MySQL)
+
+INSTALLATION:
+Unpack cavat into its own directory. Databases will be stored in ~/.cavat/ .
+
+RUNNING CAVAT:
+Change into CAVaT's main directory, and run "python cavat.py". When the system
+has loaded, you should see a "cavat>" prompt. You can quit with Ctrl-C, "quit"
+or "exit".
+
+From here, if you have no corpora loaded, you may want to import one. Enter the
+following to load a TimeML corpus into the "test" database - it's important to
+include the trailing / in the path:
+
+cavat> corpus import /home/user/corpus/data/ to test
+
+Depending on your disk and CPU speeds, this might take about 10-20 seconds per
+megabyte of TimeML. If it seems to take longer, you can get more information 
+about what CAVaT is doing during import by enabling debug mode before import:
+
+cavat> debug on
+
+Leave debug mode with a simple:
+
+cavat> debug off
+
+Once the corpus has loaded, you can use "corpus info" to see metadata about the 
+import, or "corpus list" to see an available list of corpora. To switch between
+corpora, and to select a newly loaded one, enter "corpus use <name>".
+
+QUERIES:
+
+The show command is used for generating reports on the currently loaded corpus.
+Reports focus on one tag type, and give information about their attributes. One
+can view all values for a tag with "list" reports, or the distribution of values
+with "distribution" reports, or simply see how many instances of that tag list
+a value for a field with "state" reports.
+
+Reports can be provided in multiple formats; there is:
+ screen - for screen or fixed-width font output
+ csv - comma separated values
+ tex - LaTeX table format
+
+The general format for report generation is:
+
+show <report type> of <tag> <field> [as <format>]
+
+To try a simple query, enter:
+
+cavat> show distribution of tlink reltype
+
+You should see a table listing the values listed for relType in the current
+corpus' TLINK tags, as well as their frequencies. To see how many TLINKs use a 
+signal, and use the result in a LaTeX document, you can try:
+
+cavat> show state of tlink signalid as tex
+
+
+
+FURTHER HELP:
+
+Try the Google Code pages for CAVaT:  http://code.google.com/p/cavat/
+
+Or email the author:  leon@dcs.shef.ac.uk

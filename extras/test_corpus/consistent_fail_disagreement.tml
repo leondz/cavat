@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+
+<TimeML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="http://timeml.org/timeMLdocs/TimeML_1.2.1.xsd">
+
+Can <TIMEX3 tid="t1" type="DATE" temporalFunction="true" value="PRESENT_REF">today</TIMEX3> happen <SIGNAL sid="s1">before</SIGNAL> <TIMEX3 tid="t2" type="DATE" temporalFunction="true" VALUE="PRESENT_REF">today</TIMEX3>? Of course not!
+
+(Inconsistent document - a before b and a sim b cannot both be asserted.)
+
+<TLINK lid="l1" relType="IDENTITY" timeID="t1" relatedToTime="t2" />
+<TLINK lid="l2" relType="BEFORE" timeID="t1" relatedToTime="t2" signalID="s1" />
+
+</TimeML>
+

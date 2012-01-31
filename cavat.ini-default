@@ -1,0 +1,7 @@
+[cavat]
+dbtype=sqlite
+dbprefix=~/.cavat/
+dbname=
+dbhost=
+dbuser=
+dbpass=
