@@ -215,16 +215,14 @@ class consistent(CavatModule):
             for dbkey in self.database.keys():
                 
                 # reset these for each calculation
-                [p1,  p2] = [arg1, arg2]
+                [p1,  p2] = [arg1, arg2]            # get point relationship from agenda
                 r1 = value
                 
-                [p3,  p4] = dbkey
+                [p3,  p4] = dbkey                      # get point relationship from database
                 r2 = self.database.val(p3, p4)
                 
                 
-#                print dbkey, self.database.val(p3, p4)
-                
-                if p2 != p3:
+                if p2 != p3:                                # if there isn't immediately a shared relation, have a look to see if any other interval match from the two relations set
                 
                     if p2 == p4 or p1 == p3:
                         # check for a simultaneous relation
@@ -238,7 +236,7 @@ class consistent(CavatModule):
                         [p1,  p2,  p3,  p4] = [p3,  p4,  p1,  p2]
                         [r1,  r2] = [r2,  r1]
                 
-                if p2 != p3:
+                if p2 != p3:                                # still no matches? give up, loop around
                     continue
                 
                 
