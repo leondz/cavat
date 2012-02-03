@@ -104,3 +104,5 @@ CREATE UNIQUE INDEX "tlid" ON "tlinks" (`doc_id`,`lid`);
 CREATE UNIQUE INDEX "slid" ON "slinks" (`doc_id`,`lid`);
 CREATE UNIQUE INDEX "alid" ON "alinks" (`doc_id`,`lid`);
 CREATE UNIQUE INDEX "sentence" ON "sentences" (`doc_id`,`sentenceID`);
+CREATE UNIQUE INDEX "ikey" ON "info" (`key`);
+

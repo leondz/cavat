@@ -229,8 +229,11 @@ class ImportTimeML:
         # read directory
         fileList = os.listdir(directory)
         fileList.sort()
+        self.doc_id = -1
 
         for fileName in fileList:
+
+            self.doc_id += 1
             
             self.tags = {}
             self.tagText = {}
@@ -249,8 +252,7 @@ class ImportTimeML:
                 #skip hidden files
                 continue;
             
-            db.cursor.execute('INSERT INTO documents(docname) VALUES ("' + fileName + '")')
-            self.doc_id = int(db.cursor.lastrowid)
+            db.cursor.execute('INSERT INTO documents(docname, id) VALUES ("' + fileName + '", '+str(self.doc_id)+')')
 
             print fileName,  'as',  self.doc_id
 
@@ -323,7 +325,7 @@ class ImportTimeML:
             self.insertNodes(slinkNodes,  slinkAttribs,  'slinks')
             self.insertNodes(alinkNodes,  alinkAttribs,  'alinks')
 
-            if db.engine == 'sqlite':
+            if db.engine == 'sqlite' and self.commitEveryDoc:
                 db.conn.commit()
 
 
