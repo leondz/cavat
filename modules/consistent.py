@@ -19,7 +19,7 @@ class agenda():
         return outstring
     
     def keys(self):
-        return self.k.copy()
+        return frozenset(self.k)
     
     def pop(self):
         # like dictionary.popitem() - return a random (arg, arg, value) tuple and remove it from the agenda
@@ -38,11 +38,8 @@ class agenda():
     
     def val(self, arg1, arg2):
         # look up a value
-        
-        try:
-            return self.ag[arg1][arg2]
-        except:
-            return None
+        # calling func can behave itself or deal with its own exceptions, what am I, it's mummy? plus, not checking for exceptions gets us a 10% speed increase
+        return self.ag[arg1][arg2]
     
     def set(self, arg1, arg2, val):
         # assert a value, but don't overwrite
@@ -100,7 +97,7 @@ class consistent(CavatModule):
     failReason = ''
     
     
-    def addToAgenda(self,  arg1, arg2, val):
+    def addToAgenda(self,  arg1, arg2, val, db_keys = None):
         
         if arg1 == arg2 and val != '=':
             return False
@@ -108,7 +105,8 @@ class consistent(CavatModule):
         args = (arg1, arg2)
         reversed = (arg2, arg1)
         
-        db_keys = self.database.keys()
+        if not db_keys:
+            db_keys = self.database.keys()
         
         # check for presence of fact in agenda or database. return true if it's already there.
         if (args) in db_keys:
@@ -219,15 +217,14 @@ class consistent(CavatModule):
             if self.superVerbose:
                 print 'processing',  arg1, arg2,  value
             
-            for dbkey in self.database.keys():
-                
+            db_keys = self.database.keys()
+            for dbkey in db_keys:
                 # reset these for each calculation
                 [p1,  p2] = [arg1, arg2]            # get point relationship from agenda
                 r1 = value
                 
                 [p3,  p4] = dbkey                      # get point relationship from database
                 r2 = self.database.val(p3, p4)
-                
                 
                 if p2 != p3:                                # if there isn't immediately a shared relation, have a look to see if any other interval match from the two relations set
                 
@@ -256,13 +253,13 @@ class consistent(CavatModule):
                     print 'new rule:  %s %s %s  (because  %s %s %s  ^  %s %s %s )' % (p1,  r3,  p4,  p1,  r1,  p2,  p3,  r2,  p4)
                 
                 # try to add new inferred relation to agenda for later checking; if there's a conflict in the agenda, abort
-                if not self.addToAgenda(p1, p4,  r3):
+                if not self.addToAgenda(p1, p4,  r3, db_keys):
                     self.failReason = "Inconsistent closure - could not assert (%s %s %s)" % (p1,  r3,  p4)
                     return False
 
-                # finally, as it has no conflicts, move this relation to the database
-                else:
-                    self.database.set(arg1, arg2, value)
+            # finally, as it has no conflicts, move this relation to the database
+            else:
+                self.database.set(arg1, arg2, value)
 
         return True
     
