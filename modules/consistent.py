@@ -2,66 +2,69 @@ from cavatModule import CavatModule
 import db
 from db import runQuery
 import cavatDebug
-import sqlite3
 
 class agenda():
 
-    connection = None
-    cursor = None
-    name = None
 
     def __init__(self):
-        self.connection = sqlite3.connect(':memory:')
-        
-        self.connection.isolation_level = None
-        
-        self.connection.execute('create table agenda (arg1, arg2, val)')
-        self.connection.execute('create unique index args on agenda (arg1, arg2)')
-        self.connection.execute('create index arg1 on agenda (arg1)')
-        self.connection.execute('create index arg2 on agenda (arg2)')
-        
-        self.cursor = self.connection.cursor()
+        self.ag = {}
+        self.k = set()
     
     def __str__(self):
         outstring = 'size=' + str(self.len()) + ': '
         keys = self.keys()
         for key in keys:
-            outstring += ' '.join((key[0], self.val(key[0], key[1]), key[1])) + ';  '
+            v = self.val(key[0], key[1])
+            outstring += ' '.join((key[0], v, key[1])) + ';  '
         return outstring
     
     def keys(self):
-        self.cursor.execute('select arg1, arg2 from agenda')
-        return self.cursor.fetchall()
+        return self.k.copy()
     
     def pop(self):
-        # like dictionary.popitem()
-        self.cursor.execute('select * from agenda limit 0,1')
-        tlink = self.cursor.fetchone()
-
-        if tlink:
-            self.cursor.execute('delete from agenda where arg1 = ? and arg2 = ?', (tlink[0], tlink[1]))
-            return tlink
-        else:
+        # like dictionary.popitem() - return a random (arg, arg, value) tuple and remove it from the agenda
+        
+        if self.empty():
             return None
+        
+        (a,b) = self.k.pop()
+        v = self.ag[a][b]
+        
+        del self.ag[a][b]
+        if not len(self.ag[a]):
+            del self.ag[a]
+        
+        return (a, b, v)
     
     def val(self, arg1, arg2):
         # look up a value
         
-        self.cursor.execute('select val from agenda where (arg1 = ? and arg2 = ?)', (arg1, arg2))
-        val = self.cursor.fetchone()
-        if not val:
+        try:
+            return self.ag[arg1][arg2]
+        except:
             return None
-        else:
-            return val[0]
     
     def set(self, arg1, arg2, val):
-        self.cursor.execute('insert or ignore into agenda(arg1, arg2, val) values (?, ?, ?)', (arg1, arg2, val))
+        # assert a value, but don't overwrite
+        
+        self.k.add((arg1, arg2))
+
+        if arg1 not in self.ag:
+            self.ag[arg1] = {}
+
+        if arg2 in self.ag[arg1]:
+            return
+        
+        self.ag[arg1][arg2] = val
 
     def len(self):
-        self.cursor.execute('select * from agenda')
-        return len(self.cursor.fetchall())
+        return len(self.k)
+    
+    def empty(self):
+        # returns True if has more than 0 entries
+        return (len(self.k) == 0)
 
-class consistent(CavatModule):
+class consistent_dict(CavatModule):
     
     moduleName = 'Temporal graph consistency checker'
     moduleDescription = 'Using a point-based temporal algebra, determines whether or not a temporal graph is consistent'
@@ -99,14 +102,16 @@ class consistent(CavatModule):
     
     def addToAgenda(self,  arg1, arg2, val):
         
-        args = (arg1, arg2)
-        reversed = (arg2, arg1)
-        
         if arg1 == arg2 and val != '=':
             return False
         
+        args = (arg1, arg2)
+        reversed = (arg2, arg1)
+        
+        db_keys = self.database.keys()
+        
         # check for presence of fact in agenda or database. return true if it's already there.
-        if (args) in self.database.keys():
+        if (args) in db_keys:
             if self.database.val(arg1, arg2) != val:
                 if self.superVerbose:
                     self.failReason = "Already asserted on database that relation is " + self.database.val(arg1, arg2)
@@ -114,7 +119,9 @@ class consistent(CavatModule):
             else:
                 return True
         
-        if (args) in self.agenda.keys():
+        ag_keys = self.agenda.keys()
+        
+        if (args) in ag_keys:
             if self.agenda.val(arg1, arg2) != val:
                 if self.superVerbose:
                     self.failReason = "Already asserted on agenda that relation is " + self.agenda.val(arg1, arg2)
@@ -122,16 +129,16 @@ class consistent(CavatModule):
             else:
                 return True
         
-        if reversed in self.agenda.keys():
-            if self.agenda.val(arg2, arg1) == val and val != '=':
+        if reversed in ag_keys:
+            if val != '=' and self.agenda.val(arg2, arg1) == val:
                 if self.superVerbose:
                     self.failReason = 'Relation already exists on agenda in opposite direction, ' + arg2 +' ' + arg1 + ' ' + self.agenda.val(arg2, arg1)
                 return False
             else:
                 return True
         
-        if reversed in self.database.keys():
-            if self.database.val(arg2, arg1) == val and val != '=':
+        if reversed in db_keys:
+            if val != '=' and self.database.val(arg2, arg1) == val:
                 if self.superVerbose:
                     self.failReason = 'Relation already exists on database in opposite direction, ' + arg2 +' ' + arg1 + ' ' + self.database.val(arg2, arg1)
                 return False
@@ -203,7 +210,7 @@ class consistent(CavatModule):
             print 'Initial agenda:',  self.agenda
             print 'Initial database:',  self.database
         
-        while self.agenda.len():
+        while not self.agenda.empty():
             if self.superVerbose:
                 print '-- database',  self.database
                 print '-- agenda',  self.agenda
@@ -239,10 +246,7 @@ class consistent(CavatModule):
                 if p2 != p3:                                # still no matches? give up, loop around
                     continue
                 
-                
                 # now, we can do inference!
-                propositionKey = p1 + '.' + p4
-                
                 if r1 == '<' or r2 == '<':
                     r3 = '<'
                 else:
@@ -251,11 +255,12 @@ class consistent(CavatModule):
                 if self.superVerbose:
                     print 'new rule:  %s %s %s  (because  %s %s %s  ^  %s %s %s )' % (p1,  r3,  p4,  p1,  r1,  p2,  p3,  r2,  p4)
                 
+                # try to add new inferred relation to agenda for later checking; if there's a conflict in the agenda, abort
                 if not self.addToAgenda(p1, p4,  r3):
-
                     self.failReason = "Inconsistent closure - could not assert (%s %s %s)" % (p1,  r3,  p4)
                     return False
 
+                # finally, as it has no conflicts, move this relation to the database
                 else:
                     self.database.set(arg1, arg2, value)
 
