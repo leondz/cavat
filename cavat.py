@@ -707,6 +707,8 @@ while not finishedProcessing:
                 exec('from modules.' + moduleName + ' import ' + moduleName)
                 
             except Exception,  e:
+                import traceback
+                sys.stderr.write(repr(traceback.extract_tb(sys.exc_info()[2])))
                 errorMsg(unicode(e) + '. Path is ' + unicode(sys.path))
                 continue
             
