@@ -64,7 +64,7 @@ class agenda():
         # returns True if has more than 0 entries
         return (len(self.k) == 0)
 
-class consistent_dict(CavatModule):
+class consistent(CavatModule):
     
     moduleName = 'Temporal graph consistency checker'
     moduleDescription = 'Using a point-based temporal algebra, determines whether or not a temporal graph is consistent'
