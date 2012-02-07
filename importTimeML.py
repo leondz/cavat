@@ -232,8 +232,6 @@ class ImportTimeML:
         self.doc_id = -1
 
         for fileName in fileList:
-
-            self.doc_id += 1
             
             self.tags = {}
             self.tagText = {}
@@ -252,6 +250,7 @@ class ImportTimeML:
                 #skip hidden files
                 continue;
             
+            self.doc_id += 1
             db.cursor.execute('INSERT INTO documents(docname, id) VALUES ("' + fileName + '", '+str(self.doc_id)+')')
 
             print fileName,  'as',  self.doc_id
