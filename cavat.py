@@ -30,7 +30,7 @@ from cavatMessages import *
 import cavatDebug
 
 
-cavatVersion = 0.24
+cavatVersion = 0.25
 db.version = cavatVersion
 
 def buildSqlWhereClause(wheres):
