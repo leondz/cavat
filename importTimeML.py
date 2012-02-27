@@ -392,7 +392,7 @@ class ImportTimeML:
                         pos= db.cursor.fetchone()[0]
                     except:
                         print 'Failed to find PoS for eventID %s in doc %s - possibly a missing MAKEINSTANCE' % (tag,  fileName)
-                        return
+                        pos = ''
                     
                     if pos == '':
                         pos = 'OTHER'
