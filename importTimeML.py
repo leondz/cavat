@@ -111,7 +111,13 @@ class ImportTimeML:
 
 
     def charData(self,  data):
-        self.parsedText += data # append the data to parsedText
+        if not self.parsedText:
+            self.parsedText += data.lstrip()
+        else:
+            self.parsedText += data # append the data to parsedText
+        #self.parsedText = re.sub(r'[\n\r\t\s]+', ' ', self.parsedText)
+        self.parsedText = self.parsedText.replace('  ', ' ')
+        
         punktCompensation = 0
         for sequence in self.punktCompensate:
             punktCompensation += data.count(sequence)
