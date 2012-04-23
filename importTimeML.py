@@ -21,6 +21,7 @@ import re
 import string
 from xml.dom import minidom
 import xml.parsers.expat
+from xml.sax.saxutils import unescape
 import warnings
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
@@ -111,6 +112,7 @@ class ImportTimeML:
 
 
     def charData(self,  data):
+       
         if not self.parsedText:
             self.parsedText += data.lstrip()
         else:
@@ -280,7 +282,10 @@ class ImportTimeML:
  
             # collapse whitespaces (this is also done before processing by sax parser)
             self.bodyText = self.cleanText(self.bodyText)
-
+            
+            # unescape entities
+            self.bodyText = unescape(self.bodyText)
+            
             sentences = self.sentenceDetector.tokenize(self.bodyText)
             sentences[0] = sentences[0].lstrip()
             for i,  sentence in enumerate(sentences):
