@@ -28,7 +28,7 @@ class orphans(CavatModule):
         #  event not got an instance
         #  instance not got an event
         #  signals not referenced by any tlink or instance
-        #  
+        #  tlink referencing non-existant signal
 
         # build a list of intervals already in tlinks
 
@@ -96,7 +96,7 @@ class orphans(CavatModule):
             return
         
         for instance_ in list(db.cursor.fetchall()):
-            orphans.add('INSTANCE ' + str(instance_[0]) + 'does not reference an event')
+            orphans.add('INSTANCE ' + str(instance_[0]) + ' does not reference an event')
 
 
         # signals not referenced by any tlink, alink, slink or instance
@@ -104,8 +104,15 @@ class orphans(CavatModule):
             return
         
         for sid_ in list(db.cursor.fetchall()):
-            orphans.add('SIGNAL ' + str(sid_[0]) + 'is not referenced by any TLINK, SLINK, ALINK or MAKEINSTANCE')
+            orphans.add('SIGNAL ' + str(sid_[0]) + ' is not referenced by any TLINK, SLINK, ALINK or MAKEINSTANCE')
         
+
+        # tlink referencing non-existant signal
+        if not runQuery('SELECT lid FROM tlinks WHERE signalID != "" AND signalID NOT IN (SELECT sid FROM signals WHERE doc_id = %s) AND doc_id = %s' % (doc_id, doc_id) ):
+            return
+
+        for lid_ in list(db.cursor.fetchall()):
+            orphans.add('TLINK ' + str(lid_[0]) + ' references a signal that is not included in the annotation')
         
         
         if len(orphans) > 0:
