@@ -11,7 +11,7 @@ class orphans(CavatModule):
     moduleVersion = '1'
     
     _minVersion = 0.1
-    _maxVersion = 0.999
+    _maxVersion = 1.999
     
     def checkDocument(self,  doc_id):
         
@@ -74,13 +74,13 @@ class orphans(CavatModule):
         
         events = set()
         for event_ in list(db.cursor.fetchall()):
-            events.add(instance_[0])
+            events.add(event_[0])
         
         if not runQuery('SELECT DISTINCT eventID FROM instances WHERE doc_id = ' + doc_id):
             return
         
         instancedEvents = set()
-        for event_ in list(db.cursor.fetchall()):
+        for instance_ in list(db.cursor.fetchall()):
             instancedEvents.add(instance_[0])
         
         for missing in events.difference(instancedEvents):

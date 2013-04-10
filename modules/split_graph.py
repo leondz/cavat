@@ -12,7 +12,7 @@ class split_graph(CavatModule):
     moduleVersion = '1'
     
     _minVersion = 0.1
-    _maxVersion = 0.999
+    _maxVersion = 1.999
     
     superVerbose = cavatDebug.debug
     printGraphs = True
